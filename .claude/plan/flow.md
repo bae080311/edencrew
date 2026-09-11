@@ -27,16 +27,16 @@
 
 - [x] *(09-10 이월)* Flutter 설치 확인 → `flutter pub get` → `flutter analyze` 기준선 (3.47.3 · 무경고 · test 1개 통과)
 - [ ] *(09-10 이월)* `flutter run` 으로 스타터가 뜨는지 확인 (**Chrome 아님** — iOS 시뮬레이터 또는 macOS)
-- [ ] *(09-10 이월)* `README.md` 를 본인 문서 골격으로 덮어쓰기 (섹션만 잡아두고 내용은 진행하며 채운다)
+- [x] *(09-10 이월)* `README.md` 를 본인 문서 골격으로 덮어쓰기 (섹션만 잡아두고 내용은 진행하며 채운다)
 - [ ] **Figma 먼저 훑기** — 세 화면의 반복 요소(종목 행, 등락 텍스트, 빈 상태, 토스트)를 목록화. `Design Tokens — Dark` 프레임으로 토큰 확인. 폰트 크기는 텍스트 레이어에서 직접 읽어 메모.
-- [ ] **mock 저장** — endpoint 4개를 `curl` 로 호출해 `app/assets/mock/` 에 저장. 파일명은 `ac_samsung.json`, `realtime_005930.json`, `meta_005930.json`, `sise_day_005930_p1.html` 형태. 삼성전자(005930) + 두 종목 정도.
-- [ ] **DTO** — endpoint 4개에 각각. 필드명은 Naver 원본 유지.
-- [ ] **`SiseDayParser`** — HTML 파싱. **EUC-KR 디코딩이 첫 관문이다.** 표 숫자 순서는 `종가·전일비·시가·고가·저가·거래량`, 날짜는 `yyyyMMdd` 정규화, `lastPage` 추출.
-- [ ] **`core/format.dart`** — 천 단위, 등락 표기, 축약(천·조), `MM.DD`.
-- [ ] **유닛 테스트 2개** — `format_test.dart`, `sise_day_parser_test.dart` (mock HTML 고정 입력). 여기서 파싱을 확정하면 UI 단계에서 데이터를 의심하지 않아도 된다.
-- [ ] **앱 모델** — `Stock`(메타+시세), `Quote`(등락액·등락률·시가총액 계산), `DailyPrice`. 필드 복사뿐인 겹은 만들지 않고 그 판단을 `ARCHITECTURE.md` 변경 이력에 적는다.
-- [ ] **`StockRepository`** 추상 + **`FakeStockRepository`**(mock 을 같은 파서로 읽음) + **`NaverStockRepository`**(HTTP + 페이지 캐시 + 메타 캐시).
-- [ ] `main.dart` 에 `MultiProvider` + `--dart-define=USE_FAKE` 분기. **기본값은 실제 repository**다.
+- [x] **mock 저장** — endpoint 4개를 `curl` 로 호출해 `app/assets/mock/` 에 저장. 파일명은 `ac_samsung.json`, `realtime_005930.json`, `meta_005930.json`, `sise_day_005930_p1.html` 형태. 삼성전자(005930) + 두 종목 정도.
+- [x] **DTO** — endpoint 4개에 각각. 필드명은 Naver 원본 유지.
+- [x] **`SiseDayParser`** — HTML 파싱. **EUC-KR 디코딩이 첫 관문이다.** 표 숫자 순서는 `종가·전일비·시가·고가·저가·거래량`, 날짜는 `yyyyMMdd` 정규화, `lastPage` 추출.
+- [x] **`core/format.dart`** — 천 단위, 등락 표기, 축약(천·조), `MM.DD`.
+- [x] **유닛 테스트 2개** — `format_test.dart`, `sise_day_parser_test.dart` (mock HTML 고정 입력). 여기서 파싱을 확정하면 UI 단계에서 데이터를 의심하지 않아도 된다.
+- [x] **앱 모델** — `Stock`(메타+시세), `Quote`(등락액·등락률·시가총액 계산), `DailyPrice`. 필드 복사뿐인 겹은 만들지 않고 그 판단을 `ARCHITECTURE.md` 변경 이력에 적는다.
+- [x] **`StockRepository`** 추상 + **`FakeStockRepository`**(mock 을 같은 파서로 읽음) + **`NaverStockRepository`**(HTTP + 페이지 캐시 + 메타 캐시).
+- [x] `main.dart` 에 `MultiProvider` + `--dart-define=USE_FAKE` 분기. **기본값은 실제 repository**다.
 - [ ] **실제 endpoint 4개 연결 확인** — `USE_FAKE` 없이 검색 · 실시간 시세 · 메타 · 일별 시세가 실제로 응답하는지. 여기까지 해야 Phase 1 이 끝난다.
 
 > 커밋: `docs: README 를 프로젝트 문서로 교체` / `feat: Naver 응답 DTO 추가` / `feat: 일별 시세 HTML 파서` / `test: 파서·포맷 유닛 테스트` / `feat: StockRepository 와 Fake 구현` / `chore: mock 응답 추가`
@@ -45,7 +45,7 @@
 
 `--dart-define=USE_FAKE=true` 로 개발한다.
 
-- [ ] **`FavoritesStore`** — 관심 상태 단일 원천. 이걸 먼저 만들어야 두 화면이 동시에 붙는다.
+- [x] **`FavoritesStore`** — 관심 상태 단일 원천. 이걸 먼저 만들어야 두 화면이 동시에 붙는다.
 - [ ] **관심 화면** — UI 모델 → ViewModel → View 순서. 행 정보 4종, 등락 3상태 색, 새로고침(batch 1회 요청), 스켈레톤, 빈 상태, 정렬 바텀시트 3종 + 헤더 칩.
 - [ ] **`app_shell.dart`** — 하단 탭 바(`navActive`/`navInactive`), `IndexedStack`.
 - [ ] **검색 화면** — 입력창 + 클리어, 검색어 하이라이트, 별 토글, 토스트 2종, 초기 빈 상태, 결과 없음 상태(검색어 삽입).
