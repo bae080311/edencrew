@@ -1,0 +1,62 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test:*)",
+      "Bash(flutter pub get)",
+      "Bash(flutter pub outdated)",
+      "Bash(flutter doctor:*)",
+      "Bash(flutter --version)",
+      "Bash(dart format:*)",
+      "Bash(dart analyze:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(curl -s https://ac.stock.naver.com:*)",
+      "Bash(curl -s https://polling.finance.naver.com:*)",
+      "Bash(curl -s https://stock.naver.com:*)",
+      "Bash(curl -s https://finance.naver.com:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/dart-check.sh\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/handoff.sh\" write",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/handoff.sh\" read",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
