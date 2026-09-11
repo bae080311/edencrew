@@ -1,6 +1,6 @@
 # 테스트
 
-로직을 추가했으면 읽는다.
+로직을 추가했으면 읽는다. PR 과 `main` 푸시에서는 CI(`.github/workflows/ci.yml`)가 `flutter analyze` 와 `flutter test` 를 자동으로 돌린다 — 로컬에서 통과시키고 올린다.
 
 ## 테스트
 
