@@ -17,7 +17,7 @@
 
 - [x] 하네스 구성 (`CLAUDE.md`, 훅, agent, skill, 체크리스트)
 - [x] 저장소 초기화 + 푸시 → https://github.com/bae080311/edencrew
-- [x] `app/docs/ARCHITECTURE.md` 초기 결정 기록
+- [x] `ARCHITECTURE.md` 초기 결정 기록
 
 > 못 끝낸 3건(Flutter 기준선 · 스타터 실행 · README 골격)은 아래 Phase 1 맨 앞으로 이월.
 

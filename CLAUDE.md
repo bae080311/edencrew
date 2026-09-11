@@ -7,11 +7,11 @@
 
 | 무엇 | 어디 |
 | --- | --- |
-| 요구사항 원문 — **충돌하면 이쪽이 이긴다** | `app/docs/ASSIGNMENT.md` · `app/docs/NAVER_API.md` · `app/lib/theme/README.md` |
+| 요구사항 원문 — **충돌하면 이쪽이 이긴다** | `docs/ASSIGNMENT.md` · `docs/NAVER_API.md` · `app/lib/theme/README.md` |
 | 안내 메일 요지 (기간 · 링크 · 제출 형식) | `.claude/plan/brief.md` — **커밋 금지**(gitignore) |
 | 학습 원장 | `.claude/flywheel/learnings.md` — 뒷다리를 잡은 일, 두 번 나오면 rule 로 승격 |
 | 진행 — 일정 · 체크리스트 | `.claude/plan/` — `flow.md`(일자별 할 일 · 컷 라인, **진행 단일 소스**) · `flutter-app.md` · `lucy-target-alert.md`(요구사항 대조) |
-| 아키텍처 결정 근거 | `app/docs/ARCHITECTURE.md` — 결정을 바꿨으면 **바꾼 이유를 거기에 남긴다** |
+| 아키텍처 결정 근거 | `ARCHITECTURE.md` — 결정을 바꿨으면 **바꾼 이유를 거기에 남긴다** |
 | 직접 판단한 것 | `README.md` "직접 판단한 부분" |
 
 ## 폴더 구조

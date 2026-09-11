@@ -6,10 +6,10 @@
 
 | 문서 | 내용 |
 | --- | --- |
-| [`app/docs/ARCHITECTURE.md`](app/docs/ARCHITECTURE.md) | 아키텍처 결정과 그 이유, 변경 이력 |
-| [`app/docs/ASSIGNMENT.md`](app/docs/ASSIGNMENT.md) | 과제 원문 (요구사항 · 평가 기준) |
-| [`app/docs/NAVER_API.md`](app/docs/NAVER_API.md) | Naver 데이터 연동 가이드 |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | 아키텍처 결정과 그 이유, 변경 이력 |
 | [`app/lib/theme/README.md`](app/lib/theme/README.md) | Figma 변수 ↔ Dart 토큰 대응표 |
+
+과제에서 받은 원문도 같은 폴더에 그대로 뒀다 — [`docs/ASSIGNMENT.md`](docs/ASSIGNMENT.md)(요구사항 · 평가 기준) · [`docs/NAVER_API.md`](docs/NAVER_API.md)(데이터 연동 가이드).
 
 ---
 
@@ -60,7 +60,7 @@ dart run tool/check_endpoints.dart   # endpoint 4개 실제 응답 확인
 
 ## 기술 선택과 이유
 
-결정의 전체 목록과 근거는 [`app/docs/ARCHITECTURE.md`](app/docs/ARCHITECTURE.md) 에 있다. 요약하면,
+결정의 전체 목록과 근거는 [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) 에 있다. 요약하면,
 
 - **상태관리 · DI — `provider` + `ChangeNotifier`.** 화면 3개 규모에서 충분하고 상태관리와 의존성 주입을 같은 도구로 해결한다. Riverpod 은 이 규모에서 얻는 이득보다 개념 학습 비용이 크다고 판단했고, 주입 지점이 `main.dart` 하나여서 `get_it` 같은 DI 컨테이너도 두지 않았다.
 - **HTTP — `http`.** GET 4개뿐이라 dio 의 인터셉터 · `CancelToken` · 재시도 · FormData 가 쓰이지 않는다. 요청 취소는 ViewModel 의 latest-wins 로 해결한다. 오히려 응답이 EUC-KR 이어서 `bodyBytes` 를 그대로 코덱에 넘기는 `http` 가 다루기 쉬웠다 — dio 는 기본이 자동 변환이라 `ResponseType.bytes` 설정을 되돌려야 한다.
@@ -96,7 +96,7 @@ Figma 시안이나 과제 원문에 정의되지 않아 직접 결정한 것들.
 
 ## AI 활용 범위
 
-Claude Code 를 설계 검토 · 구현 · 문서 작성에 활용했다. 아키텍처 결정과 그 근거는 직접 판단해 [`app/docs/ARCHITECTURE.md`](app/docs/ARCHITECTURE.md) 에 남겼고, 생성된 코드는 전부 읽고 이해한 뒤 반영했다.
+Claude Code 를 설계 검토 · 구현 · 문서 작성에 활용했다. 아키텍처 결정과 그 근거는 직접 판단해 [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) 에 남겼고, 생성된 코드는 전부 읽고 이해한 뒤 반영했다.
 
 ---
 
