@@ -15,7 +15,7 @@ Claude Code 에서는 아래가 훅으로 자동 실행되지만 Codex 에는 �
 ## 어디를 보나
 
 - 오늘 할 일 — `.claude/plan/flow.md` 의 첫 미완료 Phase. 항목이 끝나면 그 자리에서 체크박스를 켠다.
-- 커밋 절차 — `.claude/skills/commit-step/SKILL.md`.
+- 브랜치 · 커밋 절차 — `.claude/rules/conventions.md` 의 브랜치 절과 `.claude/skills/commit-step/SKILL.md`. **`main` 직접 커밋 금지.**
 - 요구사항 원문 — `app/docs/ASSIGNMENT.md`, `app/docs/NAVER_API.md`. 대조 체크리스트는 `.claude/plan/flutter-app.md` · `lucy-target-alert.md`.
 - 원문 대조 리뷰 — Codex 에는 서브에이전트가 없으니 `.claude/agents/assignment-reviewer.md` 의 절차를 직접 따라 수행한다.
 

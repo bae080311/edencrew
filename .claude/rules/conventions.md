@@ -24,4 +24,18 @@
 - 메시지: `feat|fix|refactor|style|docs|test|chore: <한국어 제목>`. scope 안 붙임. 본문은 필요할 때만, **왜**를 적는다.
 - **`Co-Authored-By` 등 AI attribution 라인을 붙이지 않는다.** AI 활용 범위는 `README.md`에 한 문단으로 남긴다.
 - 푸시된 커밋에 `--amend`, `rebase`, `push --force` 금지 — 평가자가 과정을 본다.
-- `main` 직접 커밋. 하루 최소 1회 푸시.
+- 하루 최소 1회 푸시.
+
+## 브랜치
+
+**`main` 에 직접 커밋하지 않는다. 작업마다 새 브랜치를 판다.**
+
+1. 시작 전 `git switch main && git pull` 로 최신화하고 `git switch -c <type>/<내용>` 으로 판다.
+   - `<type>` 은 커밋 타입과 같다(`feat` · `fix` · `refactor` · `docs` · `test` · `chore`).
+   - `<내용>` 은 kebab-case 로 **무엇을 하는지**. 순번으로 짓지 않는다 — `feat/sise-day-parser` 지 `feat/step2` 가 아니다.
+2. **브랜치 하나 = 독립적으로 끝나는 작업 하나.** 파서 하나, 화면 하나. 커밋은 그 안에서 논리 단위로 쪼갠다(보통 2~5개).
+3. 끝나면 `git push -u origin <브랜치>` → `gh pr create`. PR 제목은 커밋 제목과 같은 형식, 본문에는 **왜 이렇게 했는지**와 확인 방법을 적는다.
+4. **머지는 사용자 승인 후에만.** 승인되면 머지하고 `git switch main && git pull`, 브랜치 삭제.
+5. 실수로 `main` 에서 작업을 시작했으면 커밋하기 전에 `git switch -c` 로 옮긴다. 이미 커밋했고 푸시 전이면 브랜치를 만들어 옮기고 `main` 을 되돌린다.
+
+PR 본문에도 AI attribution 라인을 붙이지 않는다(위 커밋 규칙과 같다).
