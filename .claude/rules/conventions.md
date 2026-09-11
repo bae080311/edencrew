@@ -20,6 +20,9 @@
 
 커밋 전 검사와 자동 커밋 금지는 `critical.md` 7번. 커밋이 끝나면 `.claude/plan/flow.md` 의 해당 체크박스를 켠다.
 
+**저장소는 `~/edenCrew` 하나다. git 명령은 항상 루트에서 실행한다.**
+`app/` 은 Flutter 프로젝트 폴더일 뿐 별도 저장소가 아니다(`.git` 은 루트에만 있다). `flutter` · `dart` 명령은 `app/` 에서 돌려야 하지만 **`cd app` 대신 서브셸로 감싼다** — `(cd app && flutter test)`. 셸 위치를 `app/` 에 남기면 다음 명령이 어느 저장소를 보는지 헷갈린다.
+
 - **작업 단위로 커밋한다**(평가 항목). 한 커밋 = 한 논리 변경. 화면 코드와 무관한 리팩터 · 문서를 같은 커밋에 섞지 않는다.
 - 메시지: `feat|fix|refactor|style|docs|test|chore: <한국어 제목>`. scope 안 붙임. 본문은 필요할 때만, **왜**를 적는다.
 - **`Co-Authored-By` 등 AI attribution 라인을 붙이지 않는다.** AI 활용 범위는 `README.md`에 한 문단으로 남긴다.
