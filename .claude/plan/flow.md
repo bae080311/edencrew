@@ -5,7 +5,7 @@
 ## 원칙
 
 1. **필수를 먼저 전부 채운다.** 선택 항목은 필수가 다 끝난 뒤에만 손댄다.
-2. **Fake 먼저, 네트워크 나중.** endpoint 는 호출이 잦으면 막힌다. mock 을 먼저 저장해 두면 파싱과 UI 를 네트워크와 무관하게 진행할 수 있다.
+2. **Fake 는 순서일 뿐 종착지가 아니다.** endpoint 는 호출이 잦으면 막히니 mock 으로 파싱을 먼저 확정한다. 다만 **완료 기준은 실제 endpoint 연동**이다 — 각 화면은 `USE_FAKE` 없이 값이 들어오는 걸 확인해야 끝난 것으로 친다.
 3. **판단은 즉시 기록.** Figma 에 없는 것을 결정할 때마다 `README.md` "직접 판단한 부분"에 한 줄. 마지막에 몰아 쓰면 반드시 빠뜨린다.
 4. **커밋은 작업 단위로.** 각 단계 아래 커밋 포인트를 적어 뒀다. `/commit-step` 으로 쪼갠다.
 5. **막히면 다음으로 넘어간다.** 한 항목에 1시간 이상 붙잡히면 남겨두고 진행한 뒤 `flutter-app.md` 에 표시한다. 요구사항 자체가 모호하면 안내 메일 회신으로 문의할 수 있다(`brief.md`).
@@ -36,7 +36,8 @@
 - [ ] **유닛 테스트 2개** — `format_test.dart`, `sise_day_parser_test.dart` (mock HTML 고정 입력). 여기서 파싱을 확정하면 UI 단계에서 데이터를 의심하지 않아도 된다.
 - [ ] **앱 모델** — `Stock`(메타+시세), `Quote`(등락액·등락률·시가총액 계산), `DailyPrice`. 필드 복사뿐인 겹은 만들지 않고 그 판단을 `ARCHITECTURE.md` 변경 이력에 적는다.
 - [ ] **`StockRepository`** 추상 + **`FakeStockRepository`**(mock 을 같은 파서로 읽음) + **`NaverStockRepository`**(HTTP + 페이지 캐시 + 메타 캐시).
-- [ ] `main.dart` 에 `MultiProvider` + `--dart-define=USE_FAKE` 분기.
+- [ ] `main.dart` 에 `MultiProvider` + `--dart-define=USE_FAKE` 분기. **기본값은 실제 repository**다.
+- [ ] **실제 endpoint 4개 연결 확인** — `USE_FAKE` 없이 검색 · 실시간 시세 · 메타 · 일별 시세가 실제로 응답하는지. 여기까지 해야 Phase 1 이 끝난다.
 
 > 커밋: `docs: README 를 프로젝트 문서로 교체` / `feat: Naver 응답 DTO 추가` / `feat: 일별 시세 HTML 파서` / `test: 파서·포맷 유닛 테스트` / `feat: StockRepository 와 Fake 구현` / `chore: mock 응답 추가`
 

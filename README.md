@@ -6,10 +6,10 @@
 
 | 문서 | 내용 |
 | --- | --- |
-| [`docs/ASSIGNMENT.md`](docs/ASSIGNMENT.md) | 화면별 요구사항, 평가 기준, 제출 방법 |
-| [`docs/NAVER_API.md`](docs/NAVER_API.md) | Naver 데이터 연동 가이드 (endpoint 4개) |
+| [`app/docs/ASSIGNMENT.md`](app/docs/ASSIGNMENT.md) | 화면별 요구사항, 평가 기준, 제출 방법 |
+| [`app/docs/NAVER_API.md`](app/docs/NAVER_API.md) | Naver 데이터 연동 가이드 (endpoint 4개) |
 
-**Figma 시안 링크는 안내 메일에 담겨 있습니다.** 시안의 `Screens` 페이지에는 화면 3개 외에 빈 상태 · 정렬 · 토스트처럼 같은 화면의 다른 상태를 그린 프레임과, 토큰 확인용 `Design Tokens — Dark` 프레임이 함께 있습니다. 어떤 프레임이 무엇인지는 [`docs/ASSIGNMENT.md`의 대상 화면](docs/ASSIGNMENT.md#대상-화면)에 정리해 두었습니다.
+**Figma 시안 링크는 안내 메일에 담겨 있습니다.** 시안의 `Screens` 페이지에는 화면 3개 외에 빈 상태 · 정렬 · 토스트처럼 같은 화면의 다른 상태를 그린 프레임과, 토큰 확인용 `Design Tokens — Dark` 프레임이 함께 있습니다. 어떤 프레임이 무엇인지는 [`app/docs/ASSIGNMENT.md`의 대상 화면](app/docs/ASSIGNMENT.md#대상-화면)에 정리해 두었습니다.
 
 AI 도구를 활용해도 괜찮습니다. 다만 이후 기술 면접에서 구현 내용을 구체적으로 질문할 예정이니, 직접 작성한 코드라고 설명할 수 있을 정도로 이해하고 계셔야 합니다.
 
@@ -20,6 +20,7 @@ AI 도구를 활용해도 괜찮습니다. 다만 이후 기술 면접에서 구
 이 저장소를 그대로 사용하면 됩니다. 별도로 프로젝트를 만들지 않아도 됩니다.
 
 ```bash
+cd app
 flutter pub get
 flutter run
 ```
@@ -56,9 +57,9 @@ assets/
   mock/                   응답 샘플을 저장해 쓰실 위치입니다
 ```
 
-`lib/` 아래 나머지 구조는 없습니다. **폴더 구조와 아키텍처는 직접 설계해 주세요.**
+`app/lib/` 아래 나머지 구조는 없습니다. **폴더 구조와 아키텍처는 직접 설계해 주세요.**
 
-`lib/main.dart`의 `StartHereScreen`은 토큰 사용 예시를 겸한 임시 화면입니다. 지우고 직접 구현한 화면으로 바꿔 주세요.
+`app/lib/main.dart`의 `StartHereScreen`은 토큰 사용 예시를 겸한 임시 화면입니다. 지우고 직접 구현한 화면으로 바꿔 주세요.
 
 ---
 
@@ -94,7 +95,7 @@ Container(
 - 필요한 토큰이 없다고 판단되면 추가해도 됩니다. 다만 왜 추가했는지 메모에 적어 주세요.
 - **글자 크기와 행간은 토큰으로 정의되어 있지 않습니다.** Figma는 서체와 굵기만 변수로 관리하고 있어서, 크기는 각 화면의 텍스트 레이어에서 직접 확인해 주세요.
 
-Figma 변수명과 Dart 필드명, 원시값, hex는 [`lib/theme/README.md`](lib/theme/README.md)에 1:1로 정리해 두었습니다. Figma에서 본 색이 코드의 어느 필드인지 헷갈릴 때 그 표를 보시면 됩니다.
+Figma 변수명과 Dart 필드명, 원시값, hex는 [`app/lib/theme/README.md`](app/lib/theme/README.md)에 1:1로 정리해 두었습니다. Figma에서 본 색이 코드의 어느 필드인지 헷갈릴 때 그 표를 보시면 됩니다.
 
 ### 폰트
 
@@ -108,7 +109,7 @@ Figma 변수명과 Dart 필드명, 원시값, hex는 [`lib/theme/README.md`](lib
 
 ## 이 README에 대해
 
-제출 시 이 문서는 **본인 프로젝트의 README로 덮어써 주세요.** 작성할 내용은 [`docs/ASSIGNMENT.md`의 제출 방법](docs/ASSIGNMENT.md#제출-방법)에 정리되어 있습니다. `docs/` 아래 문서는 남겨 두시면 됩니다.
+제출 시 이 문서는 **본인 프로젝트의 README로 덮어써 주세요.** 작성할 내용은 [`app/docs/ASSIGNMENT.md`의 제출 방법](app/docs/ASSIGNMENT.md#제출-방법)에 정리되어 있습니다. `app/docs/` 아래 문서는 남겨 두시면 됩니다.
 
 ## 라이선스
 
