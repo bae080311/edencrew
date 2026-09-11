@@ -1,45 +1,6 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# push 마다 갱신되는 세션 핸드오프 — 커밋 단위를 오염시킨다
+.claude/HANDOFF.md
+
+# 안내 메일 요지 — Figma·설치 파일 링크가 있어 public 저장소에 올리지 않는다
+.claude/plan/brief.md
 .DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
