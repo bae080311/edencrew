@@ -61,5 +61,5 @@ todo2=$(grep -c '^- \[ \]' "$root/.claude/plan/lucy-target-alert.md" 2>/dev/null
   printf -- '- 다음 첫 작업 : \n'
 } > "$out"
 
-printf '%s 의 "## 사실" 을 갱신했다. "## 메모" 의 두 줄(막힌 곳 / 다음 첫 작업)을 이번 세션 내용으로 채워라. "## 사실" 은 건드리지 않는다.\n' "${out#"$root"/}" >&2
+printf '%s 의 "## 사실" 을 갱신했다. "## 메모" 의 두 줄(막힌 곳 / 다음 첫 작업)을 이번 세션 내용으로 채워라. "## 사실" 은 건드리지 않는다. 이번에 뒷다리를 잡은 게 있으면 .claude/flywheel/learnings.md 에도 한 줄 남긴다.\n' "${out#"$root"/}" >&2
 exit 2

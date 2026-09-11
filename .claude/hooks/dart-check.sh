@@ -23,6 +23,10 @@ add() { warn="${warn}
 - $1"; }
 hits() { grep -nE "$1" "$file" 2>/dev/null | head -3; }
 
+# main 에서 코드를 고치고 있으면 먼저 브랜치부터 판다
+branch=$(git -C "$(dirname "$file")" branch --show-current 2>/dev/null)
+[ "$branch" = "main" ] && add "main 에서 작업 중이다. 커밋 전에 새 브랜치를 판다: git switch -c feat/<내용> (.claude/rules/conventions.md 브랜치 절)"
+
 is_theme=0
 case "$file" in */lib/theme/*) is_theme=1 ;; esac
 
