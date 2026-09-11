@@ -1,118 +1,103 @@
-# Flutter 신입 개발자 과제
+# 국내 주식 관심종목 앱
 
-국내 주식 관심종목 앱의 화면 3개를 **Flutter 코드**로 구현하고, 그중 한 화면을 저희 플랫폼 **Lucy Studio**로 다시 만드는 과제입니다. 전체 기간은 4일입니다.
+이든크루 Flutter 신입 개발자 평가 과제. 관심 · 검색 · 종목상세 세 화면을 Flutter 로 구현하고 Naver 금융 endpoint 4개를 연동한다. 다크 테마 단일 모드.
 
-이 문서는 저장소를 실행하고 디자인 토큰을 쓰는 방법만 다룹니다. **과제 요구사항은 아래 문서에 있습니다.**
+> **진행 중** — 아래 "구현 범위" 는 작업이 끝나는 대로 채운다.
 
 | 문서 | 내용 |
 | --- | --- |
-| [`app/docs/ASSIGNMENT.md`](app/docs/ASSIGNMENT.md) | 화면별 요구사항, 평가 기준, 제출 방법 |
-| [`app/docs/NAVER_API.md`](app/docs/NAVER_API.md) | Naver 데이터 연동 가이드 (endpoint 4개) |
-
-**Figma 시안 링크는 안내 메일에 담겨 있습니다.** 시안의 `Screens` 페이지에는 화면 3개 외에 빈 상태 · 정렬 · 토스트처럼 같은 화면의 다른 상태를 그린 프레임과, 토큰 확인용 `Design Tokens — Dark` 프레임이 함께 있습니다. 어떤 프레임이 무엇인지는 [`app/docs/ASSIGNMENT.md`의 대상 화면](app/docs/ASSIGNMENT.md#대상-화면)에 정리해 두었습니다.
-
-AI 도구를 활용해도 괜찮습니다. 다만 이후 기술 면접에서 구현 내용을 구체적으로 질문할 예정이니, 직접 작성한 코드라고 설명할 수 있을 정도로 이해하고 계셔야 합니다.
+| [`app/docs/ARCHITECTURE.md`](app/docs/ARCHITECTURE.md) | 아키텍처 결정과 그 이유, 변경 이력 |
+| [`app/docs/ASSIGNMENT.md`](app/docs/ASSIGNMENT.md) | 과제 원문 (요구사항 · 평가 기준) |
+| [`app/docs/NAVER_API.md`](app/docs/NAVER_API.md) | Naver 데이터 연동 가이드 |
+| [`app/lib/theme/README.md`](app/lib/theme/README.md) | Figma 변수 ↔ Dart 토큰 대응표 |
 
 ---
 
-## 실행하기
-
-이 저장소를 그대로 사용하면 됩니다. 별도로 프로젝트를 만들지 않아도 됩니다.
+## 실행 방법
 
 ```bash
 cd app
 flutter pub get
-flutter run
+flutter run              # 실제 endpoint 를 조회한다 (기본)
 ```
 
-모든 플랫폼으로 실행할 수 있게 만들어져 있습니다. 다만 아래 두 가지를 주의해 주세요.
+개발 중 네트워크가 막힌 구간에서는 저장해 둔 응답으로 돌릴 수 있다.
 
-- **웹(Chrome)에서는 동작하지 않습니다.** Naver endpoint가 CORS를 허용하지 않아 브라우저에서는 요청이 막힙니다. IDE 기본 실행 대상이 Chrome으로 잡혀 있는 경우가 많으니 실행 대상을 바꿔 주세요.
-- **모바일 기기나 에뮬레이터, 또는 Figma 프레임에 가까운 창 크기에서 확인해 주세요.** 데스크톱에서 창을 크게 띄우고 비교하면 의미가 없습니다.
+```bash
+flutter run --dart-define=USE_FAKE=true    # assets/mock/ 의 응답을 같은 파서로 읽는다
+```
 
-macOS 데스크톱으로 확인하실 경우 네트워크 요청에 entitlement가 필요합니다. debug 실행은 기본 설정으로 동작합니다.
+- **Flutter 3.47.3 · Dart 3.13.3** (stable)
+- **웹(Chrome)에서는 동작하지 않는다.** Naver endpoint 가 CORS 를 허용하지 않는다.
+- 확인한 플랫폼과 기기: *(작업하며 채운다)*
+- 레이아웃 기준은 Figma 프레임 `393 × 852` 이고, 창을 그 비율에 맞춰 확인한다.
+- 폰트는 스타터가 등록해 둔 `Noto Sans KR` 을 그대로 쓴다. 바꾸지 않았다.
+
+## 구현 범위
+
+**데이터 계층 — 완료**
+
+- endpoint 4개 요청 (`NaverApi`) · 파싱 · DTO 4종 · 앱 모델 연결
+- 일별 시세 HTML 파싱 (`SiseDayParser`) — EUC-KR 디코딩, 표 컬럼 순서, 전일비 부호, `lastPage`
+- 실시간 시세 **batch 조회** — 관심종목을 한 번의 요청으로 받는다
+- 일별 시세 **페이지 캐시** — 기간에 필요한 만큼만 받고 받은 페이지는 재사용, `lastPage` 초과 요청 없음
+- 숫자 · 날짜 포맷 단일 지점 (`core/format.dart`)
+- 목업 전환 (`--dart-define=USE_FAKE=true`) — 실제 구현과 **같은 DTO · 파서**를 쓴다
+
+**화면 — 진행 중**
+
+관심 · 검색 · 종목상세 세 화면과 상태 동기화가 남았다.
+
+**테스트**
+
+```bash
+cd app && flutter test        # 60개 통과
+dart run tool/check_endpoints.dart   # endpoint 4개 실제 응답 확인
+```
+
+포맷 · 파서 · DTO · 모델 · repository 를 유닛 테스트로 덮었다. 특히 **페이지 캐시는 요청 횟수를 세어 검증한다** —
+`1개월 → 3개월` 전환 때 이미 받은 1 · 2 페이지를 다시 요청하지 않고, `lastPage` 를 넘는 페이지는 요청하지 않는다.
+
+## 기술 선택과 이유
+
+결정의 전체 목록과 근거는 [`app/docs/ARCHITECTURE.md`](app/docs/ARCHITECTURE.md) 에 있다. 요약하면,
+
+- **상태관리 · DI — `provider` + `ChangeNotifier`.** 화면 3개 규모에서 충분하고 상태관리와 의존성 주입을 같은 도구로 해결한다. Riverpod 은 이 규모에서 얻는 이득보다 개념 학습 비용이 크다고 판단했고, 주입 지점이 `main.dart` 하나여서 `get_it` 같은 DI 컨테이너도 두지 않았다.
+- **HTTP — `http`.** GET 4개뿐이라 dio 의 인터셉터 · `CancelToken` · 재시도 · FormData 가 쓰이지 않는다. 요청 취소는 ViewModel 의 latest-wins 로 해결한다. 오히려 응답이 EUC-KR 이어서 `bodyBytes` 를 그대로 코덱에 넘기는 `http` 가 다루기 쉬웠다 — dio 는 기본이 자동 변환이라 `ResponseType.bytes` 설정을 되돌려야 한다.
+- **EUC-KR 디코딩 — `charset`.** 아래 "직접 판단한 부분" 참고.
+- **포맷 — `intl` 없이 `core/format.dart`.** 축약 단위(천 · 조)가 한국식 표기라 `intl` 로도 결국 직접 써야 해서 의존성을 늘릴 이유가 없다.
+- 차트 처리 방식: *(작업하며 채운다)*
+- 디자인 토큰은 값을 수정하지 않았다. 추가한 것이 있으면 여기에 이유를 적는다.
+
+## 직접 판단한 부분과 이유
+
+Figma 시안이나 과제 원문에 정의되지 않아 직접 결정한 것들. **결정할 때마다 한 줄씩 덧붙인다.**
+
+- **EUC-KR 디코딩에 `cp949_codec` 을 썼다.** `dart:convert` 의 `Encoding` 을 구현해 `utf8` 과 같은 방식으로 쓸 수 있고, 순수 Dart 라 유닛 테스트에서 mock 파일을 그대로 디코딩해 검증할 수 있다. CP949 는 EUC-KR 의 상위집합이라 호환된다.
+  후보 검토에서 셋이 탈락했다. `euc` 는 EUC-JP · Shift_JIS 전용이고, `charset_converter` 는 플랫폼 채널을 써서 위젯 바인딩 없는 유닛 테스트에서 돌지 않는다. `charset` 은 `eucKr` 코덱을 제공하지만 **디코딩이 깨져 있었다** — 내부 매핑 테이블 두 개의 이름이 서로 반대로 붙어 디코더가 역방향 테이블을 참조하고, `삼성전자` 가 `鋱鏋飜飅` 로 나온다. 패키지를 고른 뒤 실제 바이트로 한 번 돌려보고서야 발견했다.
+- **디코딩은 일별 시세 HTML 뿐 아니라 실시간 시세 JSON 에도 적용한다.** `NAVER_API.md` 는 HTML 만 인코딩을 경고했지만, 실시간 시세 응답도 `Content-Type: text/plain;charset=EUC-KR` 로 내려와 종목명(`nm`)이 깨진다. 두 곳에서 같은 코덱을 쓴다.
+- **등락액 · 등락률을 응답의 `cv` · `cr` 대신 `nv - pcv` 로 직접 계산한다.** 응답의 `cv` · `cr` 에는 부호가 없고 방향이 별도 코드(`rf`)에만 담겨 오기 때문에, 명세가 지시한 계산식을 쓰는 편이 정확하고 보합 판정도 한 곳에서 끝난다.
+- **거래량 · 시가총액 축약은 버림한다.** 시안의 `29,113천` · `1,063조` 는 표기 형식만 보여주고 절삭 방식은 정하지 않았다. 반올림하면 실제보다 큰 값으로 보이므로 버림을 택했다.
+- **등락률은 소수 2자리, 보합은 부호 없이 `0 (0.00%)` 로 표기한다.** 시안 예시가 `-400 (-0.22%)` 라 자리수를 따랐고, 0 에 `+` 가 붙으면 상승으로 읽히므로 보합에는 부호를 넣지 않았다.
+- **시세를 받지 못한 종목은 결과에서 빼고 화면은 그 행을 스켈레톤으로 남긴다.** 관심 목록의 한 종목이 거래정지 등으로 값이 비어 올 때 목록 전체를 실패로 처리하면 나머지 종목까지 못 보게 된다. 과제가 이미 요구한 "아직 시세를 받지 못한 행" 표현과 같은 상태로 합쳤다.
+- **일별 시세 표의 `등락` 은 HTML 의 방향 아이콘으로 읽는다.** 표는 전일비를 절대값으로만 보여주고 방향을 아이콘 class(`bu_pup` · `bu_pdn` · `bu_pn`)로 구분한다. 인접 행의 종가 차이로 계산하는 방법도 있지만 그러면 페이지의 가장 오래된 행에서 값이 비므로, 모든 행이 채워지는 아이콘 쪽을 택했다.
+- **시세를 못 받은 행은 `현재가순` · `등락률순` 에서 맨 아래로 보낸다.** 값이 없는 행을 값 있는 행 사이에 끼우면 정렬이 어긋나 보인다. `가나다순` 은 이름이 있으니 그대로 줄을 세운다. (과제가 직접 판단하라고 지목한 항목)
+- **`현재가순` · `등락률순` 은 내림차순이다.** 시안에 방향이 없어 큰 값 · 높은 등락률이 위로 오게 했다 — 목록에서 먼저 보고 싶은 쪽이다.
+- **관심 목록은 종목명과 시장을 함께 들고 있는다.** symbol 만 저장하면 목록을 그릴 때마다 종목 수만큼 메타를 다시 조회해야 한다. 등록하는 화면(검색 · 상세)이 이미 그 값을 갖고 있어 함께 담았다.
+- **새로고침이 실패해도 이미 받아둔 목록은 지우지 않는다.** 갱신 실패로 화면이 비면 사용자가 잃는 것이 더 크다. 처음 조회부터 실패한 경우에만 에러 상태로 바꾼다.
+- **네트워크 타임아웃은 10초, 에러 문구는 `시세를 불러오지 못했습니다` 로 뭉갠다.** 사용자가 할 수 있는 일(다시 시도)이 하나뿐이라 원인별로 문구를 나눌 이유가 없다. 응답 형식이 어긋난 경우만 `시세를 읽지 못했습니다` 로 가른다.
+- **일별 시세 표의 거래량은 축약하지 않는다.** 과제가 축약을 지시한 곳은 요약 카드의 `거래량` · `시가총액` 이고 표는 컬럼 이름만 정했다. 표는 날짜별로 값을 견주는 자리라 `6,448,323` 처럼 전체 숫자가 더 읽기 좋다고 봤다.
+- **검색어 강조는 종목명의 첫 일치 구간 한 곳만, 영문은 대소문자를 가리지 않는다.** 종목명이 짧아 같은 글자가 여러 번 나오는 경우가 드물고, `naver` 로 검색해도 `NAVER` 가 강조돼야 자연스럽다.
+- **검색 입력은 300ms 디바운스에 latest-wins 를 걸었다.** 한 글자마다 요청하면 자동완성 endpoint 를 불필요하게 두드리고, 늦게 도착한 옛 응답이 최신 결과를 덮는 문제도 막아야 한다. (디바운스 자체는 과제의 선택 항목)
+
+## 막혔던 지점과 어떻게 접근했는지
+
+- **개발 망이 네이버 금융을 차단했다.** endpoint 4개 중 3개가 TLS 핸드셰이크 직후 연결이 끊겼다. HTTP 로 요청해 보니 응답 본문이 기관망의 차단 안내 페이지(`기본 차단 정책`)여서 서버 문제가 아니라 망 필터임을 확인했고, 다른 망으로 전환해 응답을 받아 `assets/mock/` 에 저장했다. 이후 파싱 작업은 저장한 응답을 고정 입력으로 삼아 망 상태와 무관하게 진행했다.
+
+## AI 활용 범위
+
+Claude Code 를 설계 검토 · 구현 · 문서 작성에 활용했다. 아키텍처 결정과 그 근거는 직접 판단해 [`app/docs/ARCHITECTURE.md`](app/docs/ARCHITECTURE.md) 에 남겼고, 생성된 코드는 전부 읽고 이해한 뒤 반영했다.
 
 ---
 
-## 저장소 구성
-
-`flutter create` 직후의 기본 템플릿에 **디자인 토큰과 폰트만 미리 준비해 둔 상태**입니다.
-
-```text
-docs/
-  ASSIGNMENT.md           과제 요구사항 · 평가 기준 · 제출 방법
-  NAVER_API.md            Naver 데이터 연동 가이드
-lib/
-  main.dart               앱 진입점. 시작용 화면이 들어 있습니다
-  theme/
-    README.md             Figma 변수 ↔ Dart 필드 대응표
-    app_palette.dart      원시 팔레트 (Figma Primitives)
-    app_colors.dart       시맨틱 색상 토큰 (Figma Semantic / Dark)
-    app_dimens.dart       간격 · 반경 · 크기 토큰 (Figma Scale)
-    app_typography.dart   서체 · 굵기 토큰 (Figma Typography)
-    app_theme.dart        ThemeData 조립 + context 확장
-    theme.dart            barrel
-assets/
-  fonts/                  Noto Sans KR (등록까지 마쳐둔 상태입니다)
-  mock/                   응답 샘플을 저장해 쓰실 위치입니다
-```
-
-`app/lib/` 아래 나머지 구조는 없습니다. **폴더 구조와 아키텍처는 직접 설계해 주세요.**
-
-`app/lib/main.dart`의 `StartHereScreen`은 토큰 사용 예시를 겸한 임시 화면입니다. 지우고 직접 구현한 화면으로 바꿔 주세요.
-
----
-
-## 디자인 토큰
-
-색상은 `ThemeExtension`으로 정의되어 있습니다. `AppTheme.dark`가 `MaterialApp`에 이미 연결되어 있으니 `context`로 꺼내 쓰시면 됩니다.
-
-```dart
-MaterialApp(
-  theme: AppTheme.dark,
-  home: const WatchlistScreen(),
-)
-```
-
-```dart
-Text(
-  '삼성전자',
-  style: TextStyle(color: context.colors.textPrimary),
-)
-
-Container(
-  padding: EdgeInsets.symmetric(horizontal: context.dimens.space4),
-  decoration: BoxDecoration(
-    color: context.colors.surfaceRaised,
-    borderRadius: BorderRadius.circular(context.dimens.radiusMd),
-  ),
-)
-```
-
-지켜 주셔야 할 것:
-
-- **토큰 값을 수정하지 마세요.** 색상 hex를 화면 코드에 직접 쓰거나 `AppPalette`를 화면에서 바로 참조하지 말고, 항상 `context.colors.*` 시맨틱 토큰을 쓰세요. (필수)
-- 필요한 토큰이 없다고 판단되면 추가해도 됩니다. 다만 왜 추가했는지 메모에 적어 주세요.
-- **글자 크기와 행간은 토큰으로 정의되어 있지 않습니다.** Figma는 서체와 굵기만 변수로 관리하고 있어서, 크기는 각 화면의 텍스트 레이어에서 직접 확인해 주세요.
-
-Figma 변수명과 Dart 필드명, 원시값, hex는 [`app/lib/theme/README.md`](app/lib/theme/README.md)에 1:1로 정리해 두었습니다. Figma에서 본 색이 코드의 어느 필드인지 헷갈릴 때 그 표를 보시면 됩니다.
-
-### 폰트
-
-`Noto Sans KR`을 사용합니다. 폰트 파일과 `pubspec.yaml` 등록은 **미리 해두었으니 따로 작업하지 않으셔도 됩니다.**
-
-`assets/fonts/`에 Regular / Medium / Bold 세 가지 굵기가 들어 있고, `AppTypography.fontFamily`(`'NotoSansKR'`)와 같은 이름으로 등록되어 있습니다. `AppTheme.dark`가 이 family를 기본 서체로 잡아둡니다.
-
-다른 방식(예: `google_fonts` 패키지)으로 바꾸셔도 무방합니다. 바꾸셨다면 메모에 적어 주세요.
-
----
-
-## 이 README에 대해
-
-제출 시 이 문서는 **본인 프로젝트의 README로 덮어써 주세요.** 작성할 내용은 [`app/docs/ASSIGNMENT.md`의 제출 방법](app/docs/ASSIGNMENT.md#제출-방법)에 정리되어 있습니다. `app/docs/` 아래 문서는 남겨 두시면 됩니다.
-
-## 라이선스
-
-이 저장소는 이든크루 채용 과제의 스타터 템플릿으로만 제공됩니다. 과제 수행을 위해 복제하고 수정하는 것은 괜찮습니다. 다만 그 범위를 넘어선 재배포나 상업적 이용은 Edencrew의 명시적인 허가 없이 허용되지 않습니다. 자세한 내용은 루트의 `LICENSE` 파일을 확인해 주세요.
-
-**별도로 전달드린 Figma 시안과 Lucy Studio 설치 파일은 외부에 공유하지 말아주세요.**
+별도로 전달받은 Figma 시안과 Lucy Studio 설치 파일은 외부에 공유하지 않는다. 이 저장소의 라이선스는 [`LICENSE`](LICENSE) 를 참고.
