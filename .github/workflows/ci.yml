@@ -1,0 +1,29 @@
+name: CI
+
+# PR 과 main 푸시에서 과제가 필수로 요구한 정적 분석과 테스트를 돌린다.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app   # pubspec.yaml 은 app/ 에 있다
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.3   # 로컬과 같은 버전으로 고정
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # 과제 필수: 무경고여야 한다
+      - run: flutter analyze
+
+      - run: flutter test
