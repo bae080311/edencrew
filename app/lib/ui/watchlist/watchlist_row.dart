@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../data/model/price_tone.dart';
 import '../../theme/theme.dart';
+import '../common/stock_row.dart';
 import 'watchlist_ui_model.dart';
 
-/// 관심 목록의 한 행.
+/// 관심 목록의 한 행. 오른쪽에 현재가와 등락을 붙인다.
 ///
-/// 시세를 아직 못 받은 행은 가격 자리에 스켈레톤 두 줄이 들어간다.
+/// 시세를 아직 못 받은 행은 그 자리에 스켈레톤 두 줄이 들어간다.
 class WatchlistRow extends StatelessWidget {
   const WatchlistRow({required this.row, super.key});
 
@@ -24,54 +25,15 @@ class WatchlistRow extends StatelessWidget {
     final AppColors colors = context.colors;
     final AppDimens dimens = context.dimens;
 
-    return Container(
-      constraints: BoxConstraints(minHeight: dimens.rowMinHeight),
-      padding: EdgeInsets.symmetric(
-        horizontal: dimens.space4,
-        vertical: dimens.space3,
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: colors.borderSubtle,
-            width: dimens.borderHairline,
-          ),
-        ),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  row.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body.copyWith(color: colors.textPrimary),
-                ),
-                SizedBox(height: dimens.gapTextLine),
-                Text(
-                  row.marketLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: dimens.space3),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: row.isSkeleton
-                ? _skeleton(colors, dimens)
-                : _quote(colors, dimens),
-          ),
-        ],
+    return StockRow(
+      name: row.name,
+      marketLabel: row.marketLabel,
+      trailing: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: row.isSkeleton
+            ? _skeleton(colors, dimens)
+            : _quote(colors, dimens),
       ),
     );
   }

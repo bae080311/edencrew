@@ -24,6 +24,8 @@ class SearchViewModel extends ChangeNotifier {
   final FavoritesStore _favorites;
   final Duration _debounce;
 
+  static const int _queryLabelMaxLength = 20;
+
   Timer? _debounceTimer;
 
   /// 늦게 도착한 응답이 최신 결과를 덮지 않게 하는 표식.
@@ -37,6 +39,16 @@ class SearchViewModel extends ChangeNotifier {
   String get query => _query;
   LoadState get state => _state;
   String? get errorMessage => _errorMessage;
+
+  /// 결과 없음 문구에 그대로 들어가는 검색어.
+  ///
+  /// 입력 길이에 제한이 없어 원문을 그대로 넣으면 뒤 문장(`...찾지 못했습니다.`)이
+  /// 화면 밖으로 밀린다. 문장이 먼저 읽혀야 하므로 검색어 쪽을 자른다.
+  String get queryLabel {
+    final String query = _query.trim();
+    if (query.length <= _queryLabelMaxLength) return query;
+    return '${query.substring(0, _queryLabelMaxLength)}…';
+  }
 
   /// 결과 없음은 `ready && rows.isEmpty` 로 파생시킨다.
   List<SearchRowUi> get rows =>

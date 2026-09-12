@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/theme.dart';
 import 'common/app_icon.dart';
+import 'search/search_view.dart';
 import 'watchlist/watchlist_view.dart';
 
 /// 하단 탭으로 관심 · 검색을 오간다.
@@ -26,7 +27,7 @@ class _AppShellState extends State<AppShell> {
         bottom: false,
         child: IndexedStack(
           index: _index,
-          children: const <Widget>[WatchlistView(), _SearchPlaceholder()],
+          children: const <Widget>[WatchlistView(), SearchView()],
         ),
       ),
       bottomNavigationBar: _TabBar(
@@ -118,21 +119,6 @@ class _Tab extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// 검색 화면이 붙기 전까지의 자리표시자.
-class _SearchPlaceholder extends StatelessWidget {
-  const _SearchPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        '검색 화면 준비 중',
-        style: AppTypography.body.copyWith(color: context.colors.textTertiary),
       ),
     );
   }

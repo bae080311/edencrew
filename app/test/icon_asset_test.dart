@@ -13,6 +13,8 @@ void main() {
       'star-fill',
       'search',
       'check',
+      'x',
+      'search-empty',
     ]) {
       final ByteData data = await rootBundle.load('assets/icons/$name.svg');
       expect(data.lengthInBytes, greaterThan(0), reason: name);
