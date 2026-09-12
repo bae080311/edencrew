@@ -49,6 +49,12 @@ class _WatchlistViewState extends State<WatchlistView> {
   }
 
   Widget _body(WatchlistViewModel viewModel) {
+    final List<WatchlistRowUi> rows = viewModel.rows;
+
+    // 관심이 하나도 없으면 불러올 것도 없다. 조회가 실패한 뒤 마지막 종목을
+    // 해제한 경우까지 빈 상태로 받으려면 실패보다 이쪽을 먼저 본다.
+    if (rows.isEmpty) return const _Empty();
+
     if (viewModel.state == LoadState.failed) {
       return _Failure(
         message: viewModel.errorMessage ?? '시세를 불러오지 못했습니다',
@@ -56,9 +62,7 @@ class _WatchlistViewState extends State<WatchlistView> {
       );
     }
 
-    final List<WatchlistRowUi> rows = viewModel.rows;
     // 조회 중에도 행은 이미 있고 가격 자리만 스켈레톤이라 따로 로딩 화면을 두지 않는다.
-    if (rows.isEmpty) return const _Empty();
 
     return ListView.builder(
       itemCount: rows.length,
