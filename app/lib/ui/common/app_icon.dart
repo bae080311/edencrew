@@ -21,6 +21,7 @@ class AppIcon extends StatelessWidget {
   static const String check = 'check';
   static const String x = 'x';
   static const String searchEmpty = 'search-empty';
+  static const String back = 'back';
 
   final String name;
   final double size;

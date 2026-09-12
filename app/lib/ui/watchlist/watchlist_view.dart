@@ -6,6 +6,7 @@ import '../common/app_icon.dart';
 import '../common/empty_state.dart';
 import '../common/failure_view.dart';
 import '../common/load_state.dart';
+import '../detail/detail_view.dart';
 import 'watchlist_row.dart';
 import 'watchlist_sort.dart';
 import 'watchlist_sort_sheet.dart';
@@ -74,8 +75,10 @@ class _WatchlistViewState extends State<WatchlistView> {
 
     return ListView.builder(
       itemCount: rows.length,
-      itemBuilder: (BuildContext context, int index) =>
-          WatchlistRow(row: rows[index]),
+      itemBuilder: (BuildContext context, int index) => WatchlistRow(
+        row: rows[index],
+        onTap: () => openStockDetail(context, rows[index].symbol),
+      ),
     );
   }
 

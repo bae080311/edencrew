@@ -50,6 +50,17 @@ void main() {
     });
   });
 
+  group('arrowChangeLabel', () {
+    test('시안의 현재가 옆 표기와 같다 — 등락액은 절대값', () {
+      expect(arrowChangeLabel(-400, -0.0022), '▼ 400 (-0.22%)');
+      expect(arrowChangeLabel(1200, 0.0068), '▲ 1,200 (+0.68%)');
+    });
+
+    test('보합은 화살표가 없다', () {
+      expect(arrowChangeLabel(0, 0), '0 (0.00%)');
+    });
+  });
+
   group('abbrev', () {
     test('과제 원문의 축약 예시와 같다', () {
       expect(abbrev(29113000), '29,113천');
