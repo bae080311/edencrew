@@ -109,6 +109,9 @@ class WatchlistViewModel extends ChangeNotifier {
       _isRefreshing = false;
       notifyListeners();
     }
+
+    // 새로고침이 도는 동안 등록된 종목은 이 요청에 들어가지 못했다.
+    if (_reloadRequested) await load();
   }
 
   void changeSort(WatchlistSort sort) {
@@ -119,10 +122,20 @@ class WatchlistViewModel extends ChangeNotifier {
 
   /// 관심 종목을 한 번의 요청으로 조회한다.
   Future<void> _fetchQuotes() async {
-    final Map<String, Quote> received = await _repository.fetchQuotes(
-      _favorites.symbols,
-    );
-    _quotes.addAll(received);
+    final List<String> requested = _favorites.symbols;
+    final Map<String, Quote> received = await _repository.fetchQuotes(requested);
+
+    // 요청에 넣었는데 빠져 돌아온 종목은 받아둔 시세를 지운다. 그대로 두면 거래가
+    // 멈춘 값이 최신인 것처럼 남는다 — 계약대로 그 행은 스켈레톤으로 돌아간다.
+    // 기다리는 동안 새로 등록된 종목은 이 요청의 대상이 아니라 건드리지 않는다.
+    for (final String symbol in requested) {
+      final Quote? quote = received[symbol];
+      if (quote == null) {
+        _quotes.remove(symbol);
+      } else {
+        _quotes[symbol] = quote;
+      }
+    }
   }
 
   void _onFavoritesChanged() {
@@ -144,7 +157,9 @@ class WatchlistViewModel extends ChangeNotifier {
     if (!hasNew) return;
 
     // 조회 중이면 지금 나간 요청이 이 종목을 담지 못했다. 끝난 뒤로 미룬다.
-    if (_state == LoadState.loading) {
+    // 새로고침도 같은 in-flight 요청이다 — 여기서 load() 를 겹쳐 내보내면 늦게
+    // 끝난 쪽이 더 새 시세를 덮어쓴다.
+    if (_state == LoadState.loading || _isRefreshing) {
       _reloadRequested = true;
       return;
     }

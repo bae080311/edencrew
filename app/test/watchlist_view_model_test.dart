@@ -44,15 +44,26 @@ class StubStockRepository implements StockRepository {
 
   final List<List<String>> requests = <List<String>>[];
 
+  int _inFlight = 0;
+
+  /// 같은 조회가 겹쳐 나갔는지 본다. 요청 횟수만 세면 겹침을 못 잡는다.
+  int maxInFlight = 0;
+
   @override
   Future<Map<String, Quote>> fetchQuotes(List<String> symbols) async {
     requests.add(List<String>.of(symbols));
-    if (delay != null) await Future<void>.delayed(delay!);
-    if (error != null) throw error!;
-    return <String, Quote>{
-      for (final String symbol in symbols)
-        if (quotes.containsKey(symbol)) symbol: quotes[symbol]!,
-    };
+    _inFlight++;
+    if (_inFlight > maxInFlight) maxInFlight = _inFlight;
+    try {
+      if (delay != null) await Future<void>.delayed(delay!);
+      if (error != null) throw error!;
+      return <String, Quote>{
+        for (final String symbol in symbols)
+          if (quotes.containsKey(symbol)) symbol: quotes[symbol]!,
+      };
+    } finally {
+      _inFlight--;
+    }
   }
 
   @override
@@ -266,6 +277,52 @@ void main() {
       await Future.wait([viewModel.refresh(), viewModel.refresh()]);
 
       expect(repository.requests.length, 1);
+    });
+
+    test('앞선 조회에 있던 종목이 빠져 오면 받아둔 시세를 지운다', () async {
+      favorites.toggle(samsung);
+      final repository = StubStockRepository(
+        quotes: {
+          '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+        },
+      );
+      final viewModel = viewModelWith(repository);
+      await viewModel.load();
+      expect(viewModel.rows.single.priceLabel, '258,000');
+
+      // 거래정지처럼 다음 응답에서 종목이 빠지는 상황.
+      repository.quotes.clear();
+      await viewModel.refresh();
+
+      expect(
+        viewModel.rows.single.isSkeleton,
+        isTrue,
+        reason: '멈춘 시세가 최신인 것처럼 남았다',
+      );
+    });
+
+    test('새로고침 중에 등록한 종목은 새로고침이 끝난 뒤에 조회한다', () async {
+      favorites.toggle(samsung);
+      final repository = StubStockRepository(
+        delay: const Duration(milliseconds: 20),
+      );
+      final viewModel = viewModelWith(repository);
+      await viewModel.load();
+      repository.requests.clear();
+      repository.maxInFlight = 0;
+
+      final Future<void> refreshing = viewModel.refresh();
+      await Future<void>.delayed(Duration.zero);
+      favorites.toggle(hynix);
+      await refreshing;
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(
+        repository.maxInFlight,
+        1,
+        reason: '새로고침과 재조회가 겹쳐 나가면 늦게 끝난 쪽이 더 새 시세를 덮는다',
+      );
+      expect(repository.requests.last, containsAll(<String>['005930', '000660']));
     });
 
     test('실패해도 이미 받아둔 목록은 남긴다', () async {

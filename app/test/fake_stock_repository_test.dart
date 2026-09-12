@@ -19,6 +19,18 @@ void main() {
       expect(results.first.exchangeName, '코스피');
     });
 
+    test('종목코드로도 찾는다 — 화면이 `종목명 또는 종목코드` 로 안내한다', () async {
+      final results = await repository.searchStocks('005930');
+
+      expect(results.single.symbol, '005930');
+    });
+
+    test('영문은 대소문자를 가리지 않는다', () async {
+      final results = await repository.searchStocks('sdi');
+
+      expect(results.single.name, '삼성SDI');
+    });
+
     test('맞는 종목이 없으면 빈 목록 — `결과 없음` 상태를 목업으로 확인할 수 있다', () async {
       expect(await repository.searchStocks('없는종목'), isEmpty);
     });

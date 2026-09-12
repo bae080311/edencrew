@@ -37,14 +37,20 @@ class FakeStockRepository implements StockRepository {
 
   @override
   Future<List<Stock>> searchStocks(String query) async {
-    final String keyword = query.trim();
+    final String keyword = query.trim().toLowerCase();
     if (keyword.isEmpty) return const <Stock>[];
 
     final response = await _loadJson('$_dir/ac_samsung.json', utf8);
-    // 저장해 둔 응답은 하나뿐이라 이름으로 한 번 더 걸러 검색처럼 보이게 한다.
-    // 덕분에 `결과 없음` 상태도 목업으로 확인할 수 있다.
+    // 저장해 둔 응답은 하나뿐이라 한 번 더 걸러 검색처럼 보이게 한다. 덕분에
+    // `결과 없음` 상태도 목업으로 확인할 수 있다. 화면이 `종목명 또는 종목코드` 로
+    // 안내하므로 코드도 받고, 대소문자는 실제 자동완성처럼 가리지 않는다.
     return StockSearchDto.listFromResponse(response)
-        .where((dto) => dto.isDomesticStock && dto.name.contains(keyword))
+        .where(
+          (dto) =>
+              dto.isDomesticStock &&
+              (dto.name.toLowerCase().contains(keyword) ||
+                  dto.code.contains(keyword)),
+        )
         .map((dto) => dto.toStock())
         .toList(growable: false);
   }
