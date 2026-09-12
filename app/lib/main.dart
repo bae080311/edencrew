@@ -8,6 +8,7 @@ import 'data/repository/fake_stock_repository.dart';
 import 'data/repository/naver_stock_repository.dart';
 import 'data/repository/stock_repository.dart';
 import 'state/favorites_store.dart';
+import 'ui/watchlist/watchlist_view_model.dart';
 
 /// 개발용 목업 전환. **기본값은 실제 endpoint 조회**다.
 ///
@@ -23,6 +24,12 @@ void main() {
         Provider<StockRepository>(create: (_) => createStockRepository()),
         // 관심 상태 단일 원천 — 세 화면이 이 객체 하나를 본다.
         ChangeNotifierProvider<FavoritesStore>(create: (_) => FavoritesStore()),
+        ChangeNotifierProvider<WatchlistViewModel>(
+          create: (BuildContext context) => WatchlistViewModel(
+            repository: context.read<StockRepository>(),
+            favorites: context.read<FavoritesStore>(),
+          ),
+        ),
       ],
       child: const EdencrewAssignmentApp(),
     ),
