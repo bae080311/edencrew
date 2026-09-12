@@ -6,6 +6,7 @@ import '../../data/model/quote.dart';
 import '../../data/model/stock.dart';
 import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
+import '../common/debug_log.dart';
 import '../common/load_state.dart';
 import 'watchlist_ui_model.dart';
 import 'watchlist_sort.dart';
@@ -67,6 +68,7 @@ class WatchlistViewModel extends ChangeNotifier {
       await _fetchQuotes();
       _state = LoadState.ready;
     } on Object catch (error) {
+      logSwallowed('관심 조회', error);
       if (_quotes.isEmpty) {
         _state = LoadState.failed;
         _errorMessage = _messageOf(error);
@@ -100,6 +102,7 @@ class WatchlistViewModel extends ChangeNotifier {
       _state = LoadState.ready;
       _errorMessage = null;
     } on Object catch (error) {
+      logSwallowed('새로고침', error);
       // 이미 보여주던 목록은 남기고 실패만 알린다.
       if (_quotes.isEmpty) {
         _state = LoadState.failed;

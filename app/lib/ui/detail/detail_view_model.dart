@@ -9,6 +9,7 @@ import '../../data/model/stock.dart';
 import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
 import '../common/load_state.dart';
+import '../common/debug_log.dart';
 import 'detail_ui_model.dart';
 
 /// 종목상세 화면의 상태와 계산을 맡는다.
@@ -104,6 +105,7 @@ class DetailViewModel extends ChangeNotifier {
       _prices = results[2] as List<DailyPrice>;
       _state = LoadState.ready;
     } on Object catch (error) {
+      logSwallowed('상세 조회', error);
       _state = LoadState.failed;
       _errorMessage = _messageOf(error);
     }
@@ -129,6 +131,7 @@ class DetailViewModel extends ChangeNotifier {
       _errorMessage = null;
     } on Object catch (error) {
       if (period != _period) return;
+      logSwallowed('기간 전환', error);
       _errorMessage = _messageOf(error);
     } finally {
       if (period == _period) {
