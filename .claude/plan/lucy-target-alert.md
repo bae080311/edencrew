@@ -14,7 +14,7 @@
 ## 준비
 
 - [x] Lucy Studio 설치 (macOS 설치 파일은 안내 메일 링크)
-- [ ] 계정 생성 · 워크스페이스 초기 설정
+- [x] 계정 생성 · 워크스페이스 초기 설정 — 로그인 상태 확인됨. 토큰 만료일이 09-10 이라 재로그인이 필요할 수 있다
 - [ ] 튜토리얼 1회 따라하기 (처음이면 권장)
 
 ## 필수
@@ -274,6 +274,82 @@ API 는 대조가 끝났다. 남은 건 **스튜디오에서만 알 수 있는 �
 - 위젯 id 를 위 스크립트와 같은 이름(`btnPlus` · `lsvAlert` · `cmpRow` · `emptyState` ·
   `txtPrice` · `edtName` · `edtPrice` · `btnClose` · `btnSell` · `btnBuy`)으로 맞추면 그대로 붙는다.
   `cmpRow` 는 리스트 안에 놓은 **행 컴포넌트 인스턴스**의 id 다.
+
+---
+
+## GUI 작업 순서
+
+**위험한 것을 먼저 깨뜨린다.** 남은 불확실 두 개(`onStart` 진입점 이름, `setState` 안의
+컴포넌트 변수 스코프)가 틀리면 구조가 바뀐다. 예쁘게 만드는 건 그 뒤다.
+
+### 1. 프로젝트와 페이지
+
+- Lucy Team Cloud 에 프로젝트를 만들고 연다. 로컬 `cloneProject/` 는 이때 생긴다.
+- 페이지를 **`targetAlert`** 로 만든다. 프레임 `393 × 852`, 배경 `surface/base`.
+- 색 토큰 패널에서 **`price/up/text` · `price/down/text` · `surface/scrim` 이 그 이름으로 있는지 확인한다.**
+  이름이 다르면 스크립트의 문자열을 그 이름으로 바꾼다.
+
+### 2. 먼저 깨뜨려 볼 것 — 행 컴포넌트와 리스트 (여기서 막히면 나머지 설계가 바뀐다)
+
+1. 컴포넌트 `AlertRow` 를 만든다. 안에는 Text 둘(`txtName` · `txtPrice`)만.
+2. 변수 `name` · `priceLabel` · `side` 를 **readwrite 로 노출**한다. 비공개면 바깥에서 아무 일도 안 일어난다.
+3. `name` → `txtName`, `priceLabel` → `txtPrice` 의 text 에 바인딩한다.
+4. 페이지에 ListView `lsvAlert` 를 놓고 그 안에 `AlertRow` 인스턴스를 놓는다. 인스턴스 id 는 `cmpRow`.
+5. **두 행을 서로 다른 값으로 넣어 본다.** 페이지 스크립트에 임시로:
+   ```js
+   function onStart() {
+     lsvAlert.clear();
+     lsvAlert.add(); lsvAlert.setState(0, function () { cmpRow.setVar("name", "첫째"); });
+     lsvAlert.add(); lsvAlert.setState(1, function () { cmpRow.setVar("name", "둘째"); });
+   }
+   ```
+   두 행이 `첫째` · `둘째` 로 갈리면 통과. **둘 다 같은 값이면 스코프가 안 먹는 것이다** —
+   행을 컴포넌트 대신 리스트 안에 직접 그리고(튜토리얼 방식), 재사용은 컴포넌트를
+   다른 자리에서 가져다 쓰는 것으로 만족한다. 이때 `AlertRow` 자체는 버리지 않는다.
+- 같은 자리에서 **`onStart` 가 실제로 불리는지**도 같이 확인된다. 안 불리면 편집기가
+  만들어 주는 훅 이름으로 바꾼다.
+
+### 3. 헤더
+
+높이 `52`, 좌우 `16` · 상하 `12`, 양끝 정렬. `목표가 알림` 19/22 Bold `text/primary`,
+우측 `ico_plus` 22×22 **accent**. id 는 `btnPlus`.
+
+> `+` 를 Button 으로 두면 `onClick`, 아이콘/이미지로 두면 `onTap`. **둘 다 실재한다** —
+> `onTap` 은 모든 위젯이 상속하므로 어느 쪽을 골라도 된다.
+
+### 4. 빈 상태 `emptyState`
+
+세로 가운데, 요소 간격 `16`, 아래 여백 `40`, 좌우 `32`.
+`ico_bellPlus` 52×48 → `등록된 알림이 없습니다` 15/20 Medium `text/primary` →
+안내 2줄 13/20 **Bold** `text/tertiary`(두 문구 사이 `6`).
+
+`emptyState.visible` 로 껐다 켜므로 **하나의 컨테이너로 묶어 id 를 준다.**
+헤더는 이 컨테이너 **밖**에 둔다 — 빈 상태에서도 헤더는 남아야 한다.
+
+### 5. 행 색 스크립트
+
+`AlertRow` 컴포넌트 스크립트에 `onVarChanged` 로 `side` 를 받아 `txtPrice.setTextColor(...)`.
+**매수 = 빨강(`price/up/text`) · 매도 = 파랑(`price/down/text`).** 과제 1 과 같은 방향이다.
+
+### 6. 다이얼로그 폼 `targetAlertAdd`
+
+너비 `313`, 배경 `surface/overlay`, 테두리 `border/subtle`, 라운드 `16`,
+위 `20` · 좌우 `20` · 아래 `24`, 요소 간격 `24`. 딤은 `surface/scrim`.
+
+제목 `목표가 알림 추가` + 우측 `ico_x` 24×24(`btnClose`) → 라벨+입력 둘
+(`edtName` · `edtPrice`, placeholder `숫자만 입력`) → 버튼 줄
+(`btnSell` · `btnBuy`, 높이 `48`, 간격 `8`, **같은 폭으로 나눠 가진다**).
+
+### 7. 스크립트 붙이고 동작 확인
+
+임시 스크립트를 지우고 위의 `targetAlert` · `targetAlertAdd` 스크립트를 넣는다. 그다음:
+
+- `+` → 다이얼로그가 열리고 뒤가 어두워진다
+- **매수로 하나, 매도로 하나 등록** → 목록에 둘 다 뜨고 **목표가 색이 빨강·파랑으로 갈린다**
+- 목표가가 `200,000` 처럼 쉼표로 끊긴다
+- `x` → 아무것도 추가되지 않고 닫힌다
+- 종목명이나 목표가를 비우고 `매수` → 닫히지 않는다
+- 전부 지우면 빈 상태가 다시 나오고 **헤더는 남아 있다**
 
 ---
 
