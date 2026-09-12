@@ -28,9 +28,21 @@ String percent(double rate) {
   return value > 0 ? '+$body' : '-$body';
 }
 
-/// 관심 · 상세 화면의 등락 표기. 예: `-400 (-0.22%)`
+/// 관심 목록의 등락 표기. 예: `-400 (-0.22%)`
 String changeLabel(num diff, double rate) =>
     '${signedThousands(diff)} (${percent(rate)})';
+
+/// 상세 화면 현재가 옆 등락. 예: `▼ 400 (-0.22%)`
+///
+/// 방향을 화살표가 말하므로 등락액은 절대값으로 둔다. 보합은 화살표가 없다.
+String arrowChangeLabel(num diff, double rate) {
+  final String arrow = diff > 0
+      ? '▲ '
+      : diff < 0
+      ? '▼ '
+      : '';
+  return '$arrow${thousands(diff.abs())} (${percent(rate)})';
+}
 
 const int _thousand = 1000;
 const int _trillion = 1000000000000;

@@ -6,6 +6,7 @@ import '../common/app_icon.dart';
 import '../common/empty_state.dart';
 import '../common/failure_view.dart';
 import '../common/load_state.dart';
+import '../detail/detail_view.dart';
 import 'favorite_toast.dart';
 import 'search_row.dart';
 import 'search_ui_model.dart';
@@ -64,6 +65,7 @@ class _SearchViewState extends State<SearchView> {
         itemCount: rows.length,
         itemBuilder: (BuildContext context, int index) => SearchRow(
           row: rows[index],
+          onTap: () => openStockDetail(context, rows[index].symbol),
           onFavoriteTap: () => _toggleFavorite(viewModel, rows[index].symbol),
         ),
       );
