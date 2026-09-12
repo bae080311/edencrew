@@ -1,5 +1,3 @@
-import '../model/quote.dart';
-
 /// 실시간 시세 응답의 한 종목. 필드명은 Naver 원본을 유지한다.
 ///
 /// 응답 본문이 EUC-KR 이라 디코딩을 거친 문자열을 `jsonDecode` 해서 넘겨야 한다.
@@ -65,17 +63,6 @@ class RealtimeQuoteDto {
     }
     return quotes;
   }
-
-  Quote toQuote() => Quote(
-    symbol: cd,
-    price: nv,
-    previousClose: pcv,
-    open: ov,
-    high: hv,
-    low: lv,
-    volume: aq,
-    listedShares: countOfListedStock,
-  );
 
   /// `nv` 처럼 정수로 오는 값이 종목에 따라 실수로 내려올 때가 있다.
   static int _int(Map<String, dynamic> json, String key) {

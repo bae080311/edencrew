@@ -6,7 +6,7 @@ import 'package:edencrew_assignment_starter/data/model/stock.dart';
 import 'package:edencrew_assignment_starter/data/repository/stock_repository.dart';
 import 'package:edencrew_assignment_starter/state/favorites_store.dart';
 import 'package:edencrew_assignment_starter/ui/common/load_state.dart';
-import 'package:edencrew_assignment_starter/ui/watchlist/watchlist_ui_model.dart';
+import 'package:edencrew_assignment_starter/ui/watchlist/watchlist_sort.dart';
 import 'package:edencrew_assignment_starter/ui/watchlist/watchlist_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 

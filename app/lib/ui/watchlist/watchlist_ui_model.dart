@@ -1,8 +1,5 @@
 import '../../data/model/price_tone.dart';
 
-/// 관심 목록 정렬 기준. 표시 문자열은 View 가 갖는다.
-enum WatchlistSort { price, changeRate, name }
-
 /// 관심 목록의 한 행. View 는 이 값을 배치만 한다.
 class WatchlistRowUi {
   const WatchlistRowUi({

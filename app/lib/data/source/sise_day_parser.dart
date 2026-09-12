@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cp949_codec/cp949_codec.dart';
 
 import '../dto/daily_price_dto.dart';
+import '../dto/sise_day_page_dto.dart';
 
 /// 일별 시세 HTML 을 표 단위로 읽는다.
 ///

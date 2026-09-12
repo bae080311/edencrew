@@ -8,6 +8,7 @@ import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
 import '../common/load_state.dart';
 import 'watchlist_ui_model.dart';
+import 'watchlist_sort.dart';
 
 /// 관심 화면의 상태와 계산을 맡는다. View 는 정렬 · 포맷을 하지 않는다.
 class WatchlistViewModel extends ChangeNotifier {
