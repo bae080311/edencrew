@@ -111,6 +111,7 @@ Figma 시안이나 과제 원문에 정의되지 않아 직접 결정한 것들.
 
 ## 막혔던 지점과 어떻게 접근했는지
 
+- **macOS 앱에서만 조회가 전부 실패했다.** 데이터 계층 점검 도구(`dart run tool/check_endpoints.dart`)로는 endpoint 4개가 모두 응답하는데 앱에서는 검색 결과가 하나도 오지 않았다. 원인은 망이 아니라 **App Sandbox** 였다 — Flutter 의 macOS 템플릿은 `com.apple.security.network.server`(들어오는 연결)만 넣어주고 **나가는 연결(`com.apple.security.network.client`)은 켜주지 않는다.** 점검 도구는 샌드박스 밖의 Dart VM 에서 돌아 이 차이를 드러내지 못했다. 두 entitlements 파일에 권한을 추가하고, 빌드된 `.app` 에 실제로 박혔는지 `codesign -d --entitlements` 로 확인했다.
 - **개발 망이 네이버 금융을 차단했다.** endpoint 4개 중 3개가 TLS 핸드셰이크 직후 연결이 끊겼다. HTTP 로 요청해 보니 응답 본문이 기관망의 차단 안내 페이지(`기본 차단 정책`)여서 서버 문제가 아니라 망 필터임을 확인했고, 다른 망으로 전환해 응답을 받아 `assets/mock/` 에 저장했다. 이후 파싱 작업은 저장한 응답을 고정 입력으로 삼아 망 상태와 무관하게 진행했다.
 
 ## AI 활용 범위
