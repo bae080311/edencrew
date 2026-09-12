@@ -102,5 +102,22 @@ SizedBox(height: context.dimens.space4)
 | `font/style/medium` | `AppTypography.medium` | `FontWeight.w500` |
 | `font/style/bold` | `AppTypography.bold` | `FontWeight.w700` |
 
-**글자 크기와 행간은 토큰으로 정의되어 있지 않습니다.**
-Figma가 서체와 굵기만 변수로 관리하고 있어서, 크기는 각 화면의 텍스트 레이어에서 직접 확인해 주세요.
+### 텍스트 스타일 — 추가한 토큰
+
+크기와 행간은 Figma **Variables** 에는 없지만, **이름 붙은 텍스트 스타일**로는 정의되어 있습니다.
+화면마다 크기를 따로 적으면 같은 값이 흩어지므로 그 스타일을 `TextStyle` 상수로 옮겼습니다.
+값은 Figma 스타일 그대로이고 새로 지어낸 스케일이 아닙니다.
+
+| Figma 스타일 | Dart | size / lineHeight | weight | letterSpacing |
+|---|---|---|---|---|
+| `display/price` | `AppTypography.displayPrice` | 30 / 36 | 700 | -0.4 |
+| `title` | `AppTypography.title` | 19 / 22 | 700 | -0.2 |
+| `body` | `AppTypography.body` | 15 / 20 | 500 | -0.1 |
+| `label` | `AppTypography.label` | 13 / 18 | 700 | 0 |
+| `caption` | `AppTypography.caption` | 11 / 14 | 400 | 0 |
+
+Figma 에는 `body/num` · `caption/num` 도 있지만 옮기지 않았습니다.
+두 스타일이 참조하는 `font/family/numeric` 이 `font/family/base` 와 **같은 `Noto Sans KR`** 이라
+`body` · `caption` 과 렌더링이 완전히 같습니다. (`font/style/semibold` 의 실제 값도 `Bold`(w700)입니다.)
+
+이 상수에는 **색을 담지 않습니다.** 화면에서 `copyWith(color: context.colors.textPrimary)` 로 입혀 주세요.

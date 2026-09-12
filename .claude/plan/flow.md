@@ -26,9 +26,9 @@
 가장 손이 많이 가는 구간이다. 여기가 흔들리면 뒤가 전부 흔들린다. **이월 3건을 먼저 털고 시작한다** — 기준선 없이 코드를 쌓으면 나중에 경고가 어디서 왔는지 못 가린다.
 
 - [x] *(09-10 이월)* Flutter 설치 확인 → `flutter pub get` → `flutter analyze` 기준선 (3.47.3 · 무경고 · test 1개 통과)
-- [ ] *(09-10 이월)* `flutter run` 으로 스타터가 뜨는지 확인 (**Chrome 아님** — iOS 시뮬레이터 또는 macOS)
+- [ ] *(09-10 이월)* `flutter run` 으로 화면이 뜨는지 확인 (**Chrome 아님** — iOS 시뮬레이터 또는 macOS). **09-12 현재 Xcode 미설치로 막혀 있다**(Command Line Tools 만 있음). 설치 후 `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`. 그때까지는 `layout_test.dart` 로 대신 확인한다.
 - [x] *(09-10 이월)* `README.md` 를 본인 문서 골격으로 덮어쓰기 (섹션만 잡아두고 내용은 진행하며 채운다)
-- [ ] **Figma 먼저 훑기** — 세 화면의 반복 요소(종목 행, 등락 텍스트, 빈 상태, 토스트)를 목록화. `Design Tokens — Dark` 프레임으로 토큰 확인. 폰트 크기는 텍스트 레이어에서 직접 읽어 메모.
+- [x] **Figma 먼저 훑기** — 세 화면의 반복 요소(종목 행, 등락 텍스트, 빈 상태, 토스트)를 목록화. `Design Tokens — Dark` 프레임으로 토큰 확인. 폰트 크기는 텍스트 레이어에서 직접 읽어 메모.
 - [x] **mock 저장** — endpoint 4개를 `curl` 로 호출해 `app/assets/mock/` 에 저장. 파일명은 `ac_samsung.json`, `realtime_005930.json`, `meta_005930.json`, `sise_day_005930_p1.html` 형태. 삼성전자(005930) + 두 종목 정도.
 - [x] **DTO** — endpoint 4개에 각각. 필드명은 Naver 원본 유지.
 - [x] **`SiseDayParser`** — HTML 파싱. **EUC-KR 디코딩이 첫 관문이다.** 표 숫자 순서는 `종가·전일비·시가·고가·저가·거래량`, 날짜는 `yyyyMMdd` 정규화, `lastPage` 추출.
@@ -46,8 +46,8 @@
 `--dart-define=USE_FAKE=true` 로 개발한다.
 
 - [x] **`FavoritesStore`** — 관심 상태 단일 원천. 이걸 먼저 만들어야 두 화면이 동시에 붙는다.
-- [ ] **관심 화면** — UI 모델 → ViewModel → View 순서. 행 정보 4종, 등락 3상태 색, 새로고침(batch 1회 요청), 스켈레톤, 빈 상태, 정렬 바텀시트 3종 + 헤더 칩.
-- [ ] **`app_shell.dart`** — 하단 탭 바(`navActive`/`navInactive`), `IndexedStack`.
+- [x] **관심 화면** — UI 모델 → ViewModel → View 순서. 행 정보 4종, 등락 3상태 색, 새로고침(batch 1회 요청), 스켈레톤, 빈 상태, 정렬 바텀시트 3종 + 헤더 칩.
+- [x] **`app_shell.dart`** — 하단 탭 바(`navActive`/`navInactive`), `IndexedStack`. *검색 탭은 자리표시자 — 검색 화면 브랜치에서 교체한다.*
 - [ ] **검색 화면** — 입력창 + 클리어, 검색어 하이라이트, 별 토글, 토스트 2종, 초기 빈 상태, 결과 없음 상태(검색어 삽입).
 - [ ] **공통 컴포넌트 승격** — 관심 행과 검색 행이 겹치는 부분(등락 텍스트, 종목 행 레이아웃, 빈 상태, 스켈레톤)을 `ui/common/` 으로. **두 번째 사용처가 생긴 지금이 승격 시점이다.**
 - [ ] **상태 동기화 확인** — 검색에서 등록 → 관심 목록에 나타나는지, 별 아이콘이 두 화면에서 같이 바뀌는지.
