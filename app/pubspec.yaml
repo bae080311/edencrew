@@ -35,6 +35,16 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # 상태관리 + DI. 화면 3개 규모에서 ChangeNotifier 로 충분하다.
+  provider: ^6.1.2
+
+  # GET 4개뿐이라 dio 의 인터셉터·취소·재시도가 쓰이지 않는다.
+  http: ^1.2.2
+
+  # 일별 시세 HTML 과 실시간 시세 JSON 이 모두 EUC-KR 이다.
+  # dart:convert 의 Encoding 구현이라 utf8 과 같은 방식으로 쓴다.
+  cp949_codec: ^1.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

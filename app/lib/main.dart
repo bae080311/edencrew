@@ -1,9 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import 'data/repository/fake_stock_repository.dart';
+import 'data/repository/naver_stock_repository.dart';
+import 'data/repository/stock_repository.dart';
+import 'state/favorites_store.dart';
 import 'theme/theme.dart';
+import 'ui/start_here_view.dart';
+
+/// 개발용 목업 전환. **기본값은 실제 endpoint 조회**다.
+///
+/// ```bash
+/// flutter run --dart-define=USE_FAKE=true
+/// ```
+const bool useFake = bool.fromEnvironment('USE_FAKE');
 
 void main() {
-  runApp(const EdencrewAssignmentApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<StockRepository>(create: (_) => createStockRepository()),
+        // 관심 상태 단일 원천 — 세 화면이 이 객체 하나를 본다.
+        ChangeNotifierProvider<FavoritesStore>(create: (_) => FavoritesStore()),
+      ],
+      child: const EdencrewAssignmentApp(),
+    ),
+  );
+}
+
+/// 구현체 이름이 등장하는 곳은 여기 하나다.
+StockRepository createStockRepository() {
+  if (!useFake) return NaverStockRepository();
+  return FakeStockRepository(
+    // `data` 는 flutter 를 import 하지 않으므로 asset 접근을 여기서 주입한다.
+    loadAsset: (String path) async =>
+        (await rootBundle.load(path)).buffer.asUint8List(),
+  );
 }
 
 class EdencrewAssignmentApp extends StatelessWidget {
@@ -14,76 +47,7 @@ class EdencrewAssignmentApp extends StatelessWidget {
     return MaterialApp(
       title: '이든크루 평가 과제',
       theme: AppTheme.dark,
-      home: const StartHereScreen(),
-    );
-  }
-}
-
-/// 과제 시작점입니다. 이 화면은 지우고 직접 구현한 화면으로 바꿔 주세요.
-///
-/// 디자인 토큰을 어떻게 꺼내 쓰는지 보여주는 예시이기도 합니다.
-class StartHereScreen extends StatelessWidget {
-  const StartHereScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColors colors = context.colors;
-    final AppDimens dimens = context.dimens;
-
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(dimens.space5),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                '이든크루 평가 과제',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 24,
-                  fontWeight: AppTypography.bold,
-                ),
-              ),
-              SizedBox(height: dimens.space2),
-              Text(
-                'README.md를 먼저 읽고, 이 화면부터 교체해 주세요.\n'
-                '색과 간격은 lib/theme의 토큰을 통해서만 사용해 주세요.',
-                style: TextStyle(
-                  color: colors.textSecondary,
-                  fontSize: 14,
-                  fontWeight: AppTypography.regular,
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: dimens.space5),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: dimens.space3,
-                  vertical: dimens.space2,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.accentBg,
-                  borderRadius: BorderRadius.circular(dimens.radiusMd),
-                  border: Border.all(
-                    color: colors.borderSubtle,
-                    width: dimens.borderHairline,
-                  ),
-                ),
-                child: Text(
-                  'context.colors / context.dimens',
-                  style: TextStyle(
-                    color: colors.accentDefault,
-                    fontSize: 13,
-                    fontWeight: AppTypography.medium,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      home: const StartHereView(),
     );
   }
 }
