@@ -113,10 +113,19 @@ SizedBox(height: context.dimens.space4)
 | `gapToastBottom` | 10 | 토스트 ↔ 탭 바 |
 | `radiusSheet` | 16 | 바텀시트 상단 모서리 |
 | `sheetTitleHeight` | 64 | 바텀시트 제목 영역 높이 |
+| `appBarPaddingVertical` | 10 | 종목상세 앱 바 상하 여백 |
+| `bodyPaddingTop` | 14 | 종목상세 본문 상단 여백 |
+| `chipPaddingVertical` | 5 | 기간 탭 칩 상하 여백 |
+| `cardPaddingHorizontal` | 10 | 요약 카드 셀 좌우 여백 |
+| `cardPaddingVertical` | 9 | 요약 카드 셀 상하 여백 |
+| `gapCardLabel` | 3 | 요약 카드 라벨 ↔ 값 |
+| `tableRowPaddingVertical` | 7 | 일별 시세 표 행 상하 여백 |
 
-스켈레톤 막대 **크기**(64×16 · 48×12)만 넣지 않았습니다. 간격 · 반경 · 아이콘과
-달리 한 위젯의 상자 크기라서 다른 화면이 가져다 쓸 값이 아닙니다. 두 번째
-사용처가 생기면 그때 올립니다.
+넣지 않은 것은 **크기**뿐입니다 — 스켈레톤 막대(64×16 · 48×12), 캔들 차트 높이
+200, 일별 시세 표의 날짜 칸 46. 간격 · 반경 · 아이콘과 달리 한 위젯의 상자 크기라서
+다른 화면이 가져다 쓸 값이 아닙니다. 두 번째 사용처가 생기면 그때 올립니다.
+캔들 간격 1.2 · 최소 굵기 0.8 은 `CustomPainter` 안의 그리기 값이고, 과제가 차트
+내부는 시안과 달라도 된다고 명시한 범위입니다.
 
 **여백은 예외를 두지 않습니다.** 검색 입력 필드와 토스트의 여백도 처음에는 "상자
 값"으로 보고 위젯 안에 `const` 로 뒀다가 되돌렸습니다. `critical.md` 2번이

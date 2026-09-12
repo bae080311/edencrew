@@ -50,10 +50,12 @@ class DetailViewModel extends ChangeNotifier {
   String? get marketLabel =>
       _stock == null ? null : '${_stock!.symbol} · ${_stock!.exchangeName}';
 
-  String? get priceLabel => _quote == null ? null : fmt.thousands(_quote!.price);
+  String? get priceLabel =>
+      _quote == null ? null : fmt.thousands(_quote!.price);
 
+  /// 시안은 현재가 옆 등락을 `▼ 400 (-0.22%)` 로 쓴다 — 목록 행과 표기가 다르다.
   String? get changeLabel =>
-      _quote == null ? null : fmt.changeLabel(_quote!.diff, _quote!.rate);
+      _quote == null ? null : fmt.arrowChangeLabel(_quote!.diff, _quote!.rate);
 
   PriceTone get tone => _quote?.tone ?? PriceTone.flat;
 
@@ -125,11 +127,14 @@ class DetailViewModel extends ChangeNotifier {
     }
   }
 
+  /// 메타를 받기 전에는 등록할 수 없다. 이름 · 시장이 빈 종목을 관심 목록에 넣으면
+  /// 나중에 메타가 도착해도 그 행은 종목코드만 보여준 채로 남는다.
+  bool get canToggleFavorite => _stock != null;
+
   /// 여기서 해제하고 돌아가면 관심 목록에도 반영된다 — 같은 store 를 본다.
   bool toggleFavorite() {
-    final Stock stock =
-        _stock ??
-        Stock(symbol: symbol, name: symbol, exchangeName: '');
+    final Stock? stock = _stock;
+    if (stock == null) return false;
     return _favorites.toggle(stock);
   }
 

@@ -117,7 +117,7 @@ void main() {
       await viewModel.load();
 
       expect(viewModel.priceLabel, '258,000');
-      expect(viewModel.changeLabel, '-11,000 (-4.09%)');
+      expect(viewModel.changeLabel, '▼ 11,000 (-4.09%)');
       expect(viewModel.tone, PriceTone.down);
     });
   });
@@ -280,6 +280,37 @@ void main() {
       expect(viewModel.chartPrices.single.close, 257500);
       expect(viewModel.chartPrices.single.high, 261000);
       expect(viewModel.chartPrices.single.tone, PriceTone.down);
+    });
+  });
+
+  group('관심 등록', () {
+    test('메타를 받기 전에는 등록할 수 없다', () {
+      final FavoritesStore favorites = FavoritesStore();
+      final DetailViewModel viewModel = DetailViewModel(
+        repository: StubStockRepository(),
+        favorites: favorites,
+        symbol: '005930',
+      );
+
+      expect(viewModel.canToggleFavorite, isFalse);
+      expect(viewModel.toggleFavorite(), isFalse);
+      // 이름 · 시장이 빈 종목이 들어가면 관심 목록이 종목코드만 보여준 채로 남는다.
+      expect(favorites.isEmpty, isTrue);
+    });
+
+    test('메타를 받은 뒤에는 이름과 시장이 함께 등록된다', () async {
+      final FavoritesStore favorites = FavoritesStore();
+      final DetailViewModel viewModel = DetailViewModel(
+        repository: StubStockRepository(),
+        favorites: favorites,
+        symbol: '005930',
+      );
+      await viewModel.load();
+
+      expect(viewModel.canToggleFavorite, isTrue);
+      expect(viewModel.toggleFavorite(), isTrue);
+      expect(favorites.stocks.single.name, '삼성전자');
+      expect(favorites.stocks.single.exchangeName, '코스피');
     });
   });
 }

@@ -34,6 +34,13 @@ class AppDimens extends ThemeExtension<AppDimens> {
     required this.gapToastBottom,
     required this.radiusSheet,
     required this.sheetTitleHeight,
+    required this.appBarPaddingVertical,
+    required this.bodyPaddingTop,
+    required this.chipPaddingVertical,
+    required this.cardPaddingHorizontal,
+    required this.cardPaddingVertical,
+    required this.gapCardLabel,
+    required this.tableRowPaddingVertical,
   });
 
   const AppDimens.standard()
@@ -62,7 +69,14 @@ class AppDimens extends ThemeExtension<AppDimens> {
         toastPaddingVertical = 14,
         gapToastBottom = 10,
         radiusSheet = 16,
-        sheetTitleHeight = 64;
+        sheetTitleHeight = 64,
+        appBarPaddingVertical = 10,
+        bodyPaddingTop = 14,
+        chipPaddingVertical = 5,
+        cardPaddingHorizontal = 10,
+        cardPaddingVertical = 9,
+        gapCardLabel = 3,
+        tableRowPaddingVertical = 7;
 
   final double space1;
   final double space2;
@@ -125,6 +139,27 @@ class AppDimens extends ThemeExtension<AppDimens> {
   /// 바텀시트 제목 영역 높이.
   final double sheetTitleHeight;
 
+  /// 상세 화면 앱 바의 상하 여백.
+  final double appBarPaddingVertical;
+
+  /// 상세 화면 본문의 첫 요소까지 띄우는 여백.
+  final double bodyPaddingTop;
+
+  /// 기간 탭 칩의 상하 여백.
+  final double chipPaddingVertical;
+
+  /// 요약 카드 셀의 좌우 여백.
+  final double cardPaddingHorizontal;
+
+  /// 요약 카드 셀의 상하 여백.
+  final double cardPaddingVertical;
+
+  /// 요약 카드에서 라벨과 값 사이.
+  final double gapCardLabel;
+
+  /// 일별 시세 표 한 행의 상하 여백.
+  final double tableRowPaddingVertical;
+
   @override
   AppDimens copyWith({
     double? space1,
@@ -153,6 +188,13 @@ class AppDimens extends ThemeExtension<AppDimens> {
     double? gapToastBottom,
     double? radiusSheet,
     double? sheetTitleHeight,
+    double? appBarPaddingVertical,
+    double? bodyPaddingTop,
+    double? chipPaddingVertical,
+    double? cardPaddingHorizontal,
+    double? cardPaddingVertical,
+    double? gapCardLabel,
+    double? tableRowPaddingVertical,
   }) {
     return AppDimens(
       space1: space1 ?? this.space1,
@@ -181,6 +223,13 @@ class AppDimens extends ThemeExtension<AppDimens> {
       gapToastBottom: gapToastBottom ?? this.gapToastBottom,
       radiusSheet: radiusSheet ?? this.radiusSheet,
       sheetTitleHeight: sheetTitleHeight ?? this.sheetTitleHeight,
+      appBarPaddingVertical: appBarPaddingVertical ?? this.appBarPaddingVertical,
+      bodyPaddingTop: bodyPaddingTop ?? this.bodyPaddingTop,
+      chipPaddingVertical: chipPaddingVertical ?? this.chipPaddingVertical,
+      cardPaddingHorizontal: cardPaddingHorizontal ?? this.cardPaddingHorizontal,
+      cardPaddingVertical: cardPaddingVertical ?? this.cardPaddingVertical,
+      gapCardLabel: gapCardLabel ?? this.gapCardLabel,
+      tableRowPaddingVertical: tableRowPaddingVertical ?? this.tableRowPaddingVertical,
     );
   }
 
@@ -214,6 +263,13 @@ class AppDimens extends ThemeExtension<AppDimens> {
       gapToastBottom: lerpDouble(gapToastBottom, other.gapToastBottom, t)!,
       radiusSheet: lerpDouble(radiusSheet, other.radiusSheet, t)!,
       sheetTitleHeight: lerpDouble(sheetTitleHeight, other.sheetTitleHeight, t)!,
+      appBarPaddingVertical: lerpDouble(appBarPaddingVertical, other.appBarPaddingVertical, t)!,
+      bodyPaddingTop: lerpDouble(bodyPaddingTop, other.bodyPaddingTop, t)!,
+      chipPaddingVertical: lerpDouble(chipPaddingVertical, other.chipPaddingVertical, t)!,
+      cardPaddingHorizontal: lerpDouble(cardPaddingHorizontal, other.cardPaddingHorizontal, t)!,
+      cardPaddingVertical: lerpDouble(cardPaddingVertical, other.cardPaddingVertical, t)!,
+      gapCardLabel: lerpDouble(gapCardLabel, other.gapCardLabel, t)!,
+      tableRowPaddingVertical: lerpDouble(tableRowPaddingVertical, other.tableRowPaddingVertical, t)!,
     );
   }
 }

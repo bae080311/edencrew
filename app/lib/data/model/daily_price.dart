@@ -23,5 +23,11 @@ class DailyPrice {
   final int low;
   final int volume;
 
+  /// 전일비 방향. 일별 시세 표의 `등락` 이 쓴다.
   PriceTone get tone => PriceTone.of(diff);
+
+  /// 캔들 몸통 방향. 몸통을 시가~종가로 그리므로 색도 같은 기준이어야 한다.
+  /// 전일비와 갈릴 수 있다 — 전일 종가 100 · 시가 110 · 종가 105 는
+  /// 전일비로는 상승이지만 몸통은 내렸다.
+  PriceTone get candleTone => PriceTone.of(close - open);
 }
