@@ -14,3 +14,4 @@
 - 2026-09-11 | `finance.naver.com` 이 Dart 기본 User-Agent 로는 표 대신 에러 페이지를 200 으로 돌려줬다. curl(브라우저 UA)로는 10,622바이트인데 Dart UA 로는 2,741바이트 → **응답 크기가 UA 에 따라 다르면 내용까지 확인한다.** `rules/data.md` 에 반영
 - 2026-09-11 | mock 을 두 번 받아 장중 시세가 바뀌어 통과했던 테스트가 깨졌다 → **저장한 mock 은 고정 입력이다. 다시 받지 않는다.** `rules/data.md` 에 반영
 - 2026-09-11 | `cd .../app` 으로 셸 위치를 옮겨 놓아 사용자가 `app/` 이 따로 remote 에 연결된 것으로 읽었다. 실제로 `.git` 은 루트에만 있었다 → **저장소 루트 혼동이 두 번째다. `rules/conventions.md` Git 로 승격** — git 은 루트에서, `flutter` 는 `(cd app && ...)` 서브셸로.
+- 2026-09-12 | 아이콘 경로를 일부러 깨뜨렸는데 `layout_test` 가 그대로 통과했다. `SvgPicture.asset` 은 에셋을 못 찾아도 예외 없이 빈 자리를 그린다 → **에셋 존재는 `rootBundle.load` 로 따로 검증한다**(`icon_asset_test.dart`). 위젯 테스트 통과가 "그려졌다"를 뜻하지 않는다
