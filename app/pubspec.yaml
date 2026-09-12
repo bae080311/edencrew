@@ -45,6 +45,10 @@ dependencies:
   # dart:convert 의 Encoding 구현이라 utf8 과 같은 방식으로 쓴다.
   cp949_codec: ^1.0.2
 
+  # 시안 아이콘이 SVG 다. 글리프를 시안 그대로 쓰려고 도입했고,
+  # 활성 / 비활성 색은 ColorFilter 로 입힌다.
+  flutter_svg: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -69,6 +73,7 @@ flutter:
 
   assets:
     - assets/mock/
+    - assets/icons/
 
   fonts:
     - family: NotoSansKR
