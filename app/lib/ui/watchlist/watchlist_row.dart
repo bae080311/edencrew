@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../data/model/price_tone.dart';
 import '../../theme/theme.dart';
+import '../common/price_tone_color.dart';
 import '../common/stock_row.dart';
 import 'watchlist_ui_model.dart';
 
@@ -47,7 +47,9 @@ class WatchlistRow extends StatelessWidget {
       SizedBox(height: dimens.gapTextLine),
       Text(
         row.changeLabel!,
-        style: AppTypography.caption.copyWith(color: _toneColor(colors)),
+        style: AppTypography.caption.copyWith(
+          color: priceToneText(colors, row.tone),
+        ),
       ),
     ];
   }
@@ -68,18 +70,6 @@ class WatchlistRow extends StatelessWidget {
         radius: dimens.radiusSm,
       ),
     ];
-  }
-
-  /// 상승 = 빨강, 하락 = 파랑. 국내 시장 관행이다.
-  Color _toneColor(AppColors colors) {
-    switch (row.tone) {
-      case PriceTone.up:
-        return colors.priceUpText;
-      case PriceTone.down:
-        return colors.priceDownText;
-      case PriceTone.flat:
-        return colors.priceFlatText;
-    }
   }
 }
 
