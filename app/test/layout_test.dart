@@ -9,6 +9,7 @@ import 'package:edencrew_assignment_starter/ui/app_shell.dart';
 import 'package:edencrew_assignment_starter/ui/common/app_icon.dart';
 import 'package:edencrew_assignment_starter/ui/search/search_row.dart';
 import 'package:edencrew_assignment_starter/ui/search/search_view_model.dart';
+import 'package:edencrew_assignment_starter/ui/watchlist/watchlist_row.dart';
 import 'package:edencrew_assignment_starter/ui/watchlist/watchlist_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,15 +47,32 @@ Quote quoteOf(String symbol, {required int price, required int previousClose}) =
       listedShares: 1000,
     );
 
+/// 상승 · 하락 · 보합이 섞인 일별 시세. 캔들 색과 등락 부호를 모두 지난다.
+List<DailyPrice> dailyPricesOf(int count) => <DailyPrice>[
+  for (int i = 0; i < count; i++)
+    DailyPrice(
+      date: '2026${(i % 12 + 1).toString().padLeft(2, '0')}'
+          '${(i % 28 + 1).toString().padLeft(2, '0')}',
+      close: 170000 + (i % 7) * 1500,
+      diff: (i % 3 - 1) * 1200,
+      open: 170000 + (i % 5) * 900,
+      high: 176000 + (i % 4) * 800,
+      low: 168000 - (i % 3) * 500,
+      volume: 29113466 + i * 1000,
+    ),
+];
+
 class StubStockRepository implements StockRepository {
   StubStockRepository({
     this.quotes = const <String, Quote>{},
     this.searchResults = const <Stock>[],
+    this.dailyPrices = const <DailyPrice>[],
     this.error,
   });
 
   final Map<String, Quote> quotes;
   final List<Stock> searchResults;
+  final List<DailyPrice> dailyPrices;
   final Object? error;
 
   @override
@@ -70,13 +88,48 @@ class StubStockRepository implements StockRepository {
   Future<List<Stock>> searchStocks(String query) async => searchResults;
 
   @override
-  Future<Stock> fetchStockMeta(String symbol) => throw UnimplementedError();
+  Future<Stock> fetchStockMeta(String symbol) async {
+    if (error != null) throw error!;
+    return searchResults.firstWhere(
+      (Stock stock) => stock.symbol == symbol,
+      orElse: () => samsung,
+    );
+  }
 
   @override
   Future<List<DailyPrice>> fetchDailyPrices(
     String symbol,
     ChartPeriod period,
-  ) => throw UnimplementedError();
+  ) async {
+    if (error != null) throw error!;
+    return dailyPrices.take(period.tradingDays).toList();
+  }
+}
+
+/// 상세 화면까지 값이 흐르는 저장소. 축약 표기를 지나도록 거래량 · 상장주식수를 실제 규모로 둔다.
+StubStockRepository detailRepository(List<DailyPrice> prices) =>
+    StubStockRepository(
+      searchResults: const <Stock>[longName],
+      quotes: <String, Quote>{
+        '373220': const Quote(
+          symbol: '373220',
+          price: 195400,
+          previousClose: 194200,
+          open: 194500,
+          high: 196800,
+          low: 193900,
+          volume: 29113466,
+          listedShares: 5969782550,
+        ),
+      },
+      dailyPrices: prices,
+    );
+
+/// 검색 결과 첫 행을 눌러 상세 화면을 연다. 별 아이콘은 오른쪽 끝이라 행 가운데를 누른다.
+Future<void> openDetail(WidgetTester tester, {required String query}) async {
+  await openSearch(tester, query: query);
+  await tester.tap(find.byType(SearchRow).first);
+  await tester.pumpAndSettle();
 }
 
 Widget appWith({
@@ -336,5 +389,73 @@ void main() {
         await tester.pumpAndSettle();
       },
     );
+  });
+
+  testWidgets('종목상세 화면이 넘치지 않는다', (WidgetTester tester) async {
+    await expectNoOverflow(
+      tester,
+      (double textScale) => appWith(
+        repository: detailRepository(dailyPricesOf(60)),
+        favorites: const <Stock>[],
+        textScale: textScale,
+      ),
+      after: (WidgetTester tester) => openDetail(tester, query: 'LG'),
+    );
+  });
+
+  testWidgets('1년 탭으로 바꿔도 넘치지 않는다', (WidgetTester tester) async {
+    await expectNoOverflow(
+      tester,
+      (double textScale) => appWith(
+        // 1페이지 = 10거래일이라 1년은 245행까지 쌓인다.
+        repository: detailRepository(dailyPricesOf(245)),
+        favorites: const <Stock>[],
+        textScale: textScale,
+      ),
+      after: (WidgetTester tester) async {
+        await openDetail(tester, query: 'LG');
+        await tester.tap(find.text('1년'));
+        await tester.pumpAndSettle();
+      },
+    );
+  });
+
+  testWidgets('검색 결과 행을 누르면 종목상세로 간다', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      appWith(
+        repository: detailRepository(dailyPricesOf(20)),
+        favorites: const <Stock>[],
+        textScale: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openDetail(tester, query: 'LG');
+
+    expect(find.text('일별 시세'), findsOneWidget);
+    expect(find.text('373220 · 코스닥'), findsOneWidget);
+  });
+
+  testWidgets('상세에서 관심을 해제하면 목록에서도 빠진다', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      appWith(
+        repository: detailRepository(dailyPricesOf(20)),
+        favorites: const <Stock>[longName],
+        textScale: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(WatchlistRow).first);
+    await tester.pumpAndSettle();
+
+    // 상세 헤더의 별. 화면에 별 아이콘은 이것 하나다.
+    await tester.tap(find.byType(AppIcon).at(1));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(AppIcon).first);
+    await tester.pumpAndSettle();
+
+    // 세 화면이 FavoritesStore 하나를 본다는 증거다.
+    expect(find.text('관심 종목이 없습니다'), findsOneWidget);
   });
 }

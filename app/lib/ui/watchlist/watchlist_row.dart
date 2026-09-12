@@ -5,13 +5,14 @@ import '../common/price_tone_color.dart';
 import '../common/stock_row.dart';
 import 'watchlist_ui_model.dart';
 
-/// 관심 목록의 한 행. 오른쪽에 현재가와 등락을 붙인다.
+/// 관심 목록의 한 행. 오른쪽에 현재가와 등락을 붙이고, 행을 누르면 상세로 간다.
 ///
 /// 시세를 아직 못 받은 행은 그 자리에 스켈레톤 두 줄이 들어간다.
 class WatchlistRow extends StatelessWidget {
-  const WatchlistRow({required this.row, super.key});
+  const WatchlistRow({required this.row, required this.onTap, super.key});
 
   final WatchlistRowUi row;
+  final VoidCallback onTap;
 
   // 스켈레톤 막대 크기는 이 위젯 한 곳의 상자 크기다. 간격 · 반경 · 아이콘과
   // 달리 다른 화면이 쓸 값이 아니라 토큰으로 올리지 않았다.
@@ -25,15 +26,19 @@ class WatchlistRow extends StatelessWidget {
     final AppColors colors = context.colors;
     final AppDimens dimens = context.dimens;
 
-    return StockRow(
-      name: row.name,
-      marketLabel: row.marketLabel,
-      trailing: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: row.isSkeleton
-            ? _skeleton(colors, dimens)
-            : _quote(colors, dimens),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: StockRow(
+        name: row.name,
+        marketLabel: row.marketLabel,
+        trailing: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: row.isSkeleton
+              ? _skeleton(colors, dimens)
+              : _quote(colors, dimens),
+        ),
       ),
     );
   }
