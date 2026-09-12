@@ -27,6 +27,8 @@ class AppDimens extends ThemeExtension<AppDimens> {
     required this.iconTabBar,
     required this.iconLg,
     required this.iconEmpty,
+    required this.iconFavorite,
+    required this.iconToast,
     required this.radiusSheet,
     required this.sheetTitleHeight,
   });
@@ -51,6 +53,8 @@ class AppDimens extends ThemeExtension<AppDimens> {
         iconTabBar = 22,
         iconLg = 24,
         iconEmpty = 40,
+        iconFavorite = 22,
+        iconToast = 18,
         radiusSheet = 16,
         sheetTitleHeight = 64;
 
@@ -94,6 +98,12 @@ class AppDimens extends ThemeExtension<AppDimens> {
   /// 빈 상태 한가운데 놓이는 아이콘.
   final double iconEmpty;
 
+  /// 목록 행의 관심 등록 버튼.
+  final double iconFavorite;
+
+  /// 토스트 왼쪽 아이콘.
+  final double iconToast;
+
   /// 바텀시트 상단 모서리.
   final double radiusSheet;
 
@@ -121,6 +131,8 @@ class AppDimens extends ThemeExtension<AppDimens> {
     double? iconTabBar,
     double? iconLg,
     double? iconEmpty,
+    double? iconFavorite,
+    double? iconToast,
     double? radiusSheet,
     double? sheetTitleHeight,
   }) {
@@ -144,6 +156,8 @@ class AppDimens extends ThemeExtension<AppDimens> {
       iconTabBar: iconTabBar ?? this.iconTabBar,
       iconLg: iconLg ?? this.iconLg,
       iconEmpty: iconEmpty ?? this.iconEmpty,
+      iconFavorite: iconFavorite ?? this.iconFavorite,
+      iconToast: iconToast ?? this.iconToast,
       radiusSheet: radiusSheet ?? this.radiusSheet,
       sheetTitleHeight: sheetTitleHeight ?? this.sheetTitleHeight,
     );
@@ -172,6 +186,8 @@ class AppDimens extends ThemeExtension<AppDimens> {
       iconTabBar: lerpDouble(iconTabBar, other.iconTabBar, t)!,
       iconLg: lerpDouble(iconLg, other.iconLg, t)!,
       iconEmpty: lerpDouble(iconEmpty, other.iconEmpty, t)!,
+      iconFavorite: lerpDouble(iconFavorite, other.iconFavorite, t)!,
+      iconToast: lerpDouble(iconToast, other.iconToast, t)!,
       radiusSheet: lerpDouble(radiusSheet, other.radiusSheet, t)!,
       sheetTitleHeight: lerpDouble(sheetTitleHeight, other.sheetTitleHeight, t)!,
     );
