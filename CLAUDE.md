@@ -18,10 +18,11 @@
 
 ```
 app/lib/
-├── main.dart          # DI 조립(MultiProvider)만. 화면 코드 금지
+├── main.dart          # 진입점 + DI 조립(MultiProvider)만. 위젯 금지
+├── app.dart           # MaterialApp 조립
 ├── theme/             # 스타터 토큰 — 값 수정 금지, 추가만(이유를 README에)
 ├── core/format.dart   # 포맷 단일 지점
-├── data/{dto,source,model,repository}/
+├── data/{dto,mapper,source,model,repository}/
 ├── state/favorites_store.dart
 └── ui/{common,watchlist,search,detail}/, app_shell.dart
 ```
