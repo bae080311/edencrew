@@ -27,6 +27,11 @@ class AppDimens extends ThemeExtension<AppDimens> {
     required this.iconTabBar,
     required this.iconLg,
     required this.iconEmpty,
+    required this.iconFavorite,
+    required this.iconToast,
+    required this.fieldPaddingVertical,
+    required this.toastPaddingVertical,
+    required this.gapToastBottom,
     required this.radiusSheet,
     required this.sheetTitleHeight,
   });
@@ -51,6 +56,11 @@ class AppDimens extends ThemeExtension<AppDimens> {
         iconTabBar = 22,
         iconLg = 24,
         iconEmpty = 40,
+        iconFavorite = 22,
+        iconToast = 18,
+        fieldPaddingVertical = 10,
+        toastPaddingVertical = 14,
+        gapToastBottom = 10,
         radiusSheet = 16,
         sheetTitleHeight = 64;
 
@@ -94,6 +104,21 @@ class AppDimens extends ThemeExtension<AppDimens> {
   /// 빈 상태 한가운데 놓이는 아이콘.
   final double iconEmpty;
 
+  /// 목록 행의 관심 등록 버튼.
+  final double iconFavorite;
+
+  /// 토스트 왼쪽 아이콘.
+  final double iconToast;
+
+  /// 검색 입력 필드의 상하 여백.
+  final double fieldPaddingVertical;
+
+  /// 토스트의 상하 여백.
+  final double toastPaddingVertical;
+
+  /// 토스트와 탭 바 사이.
+  final double gapToastBottom;
+
   /// 바텀시트 상단 모서리.
   final double radiusSheet;
 
@@ -121,6 +146,11 @@ class AppDimens extends ThemeExtension<AppDimens> {
     double? iconTabBar,
     double? iconLg,
     double? iconEmpty,
+    double? iconFavorite,
+    double? iconToast,
+    double? fieldPaddingVertical,
+    double? toastPaddingVertical,
+    double? gapToastBottom,
     double? radiusSheet,
     double? sheetTitleHeight,
   }) {
@@ -144,6 +174,11 @@ class AppDimens extends ThemeExtension<AppDimens> {
       iconTabBar: iconTabBar ?? this.iconTabBar,
       iconLg: iconLg ?? this.iconLg,
       iconEmpty: iconEmpty ?? this.iconEmpty,
+      iconFavorite: iconFavorite ?? this.iconFavorite,
+      iconToast: iconToast ?? this.iconToast,
+      fieldPaddingVertical: fieldPaddingVertical ?? this.fieldPaddingVertical,
+      toastPaddingVertical: toastPaddingVertical ?? this.toastPaddingVertical,
+      gapToastBottom: gapToastBottom ?? this.gapToastBottom,
       radiusSheet: radiusSheet ?? this.radiusSheet,
       sheetTitleHeight: sheetTitleHeight ?? this.sheetTitleHeight,
     );
@@ -172,6 +207,11 @@ class AppDimens extends ThemeExtension<AppDimens> {
       iconTabBar: lerpDouble(iconTabBar, other.iconTabBar, t)!,
       iconLg: lerpDouble(iconLg, other.iconLg, t)!,
       iconEmpty: lerpDouble(iconEmpty, other.iconEmpty, t)!,
+      iconFavorite: lerpDouble(iconFavorite, other.iconFavorite, t)!,
+      iconToast: lerpDouble(iconToast, other.iconToast, t)!,
+      fieldPaddingVertical: lerpDouble(fieldPaddingVertical, other.fieldPaddingVertical, t)!,
+      toastPaddingVertical: lerpDouble(toastPaddingVertical, other.toastPaddingVertical, t)!,
+      gapToastBottom: lerpDouble(gapToastBottom, other.gapToastBottom, t)!,
       radiusSheet: lerpDouble(radiusSheet, other.radiusSheet, t)!,
       sheetTitleHeight: lerpDouble(sheetTitleHeight, other.sheetTitleHeight, t)!,
     );

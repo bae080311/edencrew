@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../theme/theme.dart';
 import '../common/app_icon.dart';
+import '../common/empty_state.dart';
+import '../common/failure_view.dart';
 import '../common/load_state.dart';
 import 'watchlist_row.dart';
 import 'watchlist_sort.dart';
@@ -53,10 +55,16 @@ class _WatchlistViewState extends State<WatchlistView> {
 
     // 관심이 하나도 없으면 불러올 것도 없다. 조회가 실패한 뒤 마지막 종목을
     // 해제한 경우까지 빈 상태로 받으려면 실패보다 이쪽을 먼저 본다.
-    if (rows.isEmpty) return const _Empty();
+    if (rows.isEmpty) {
+      return const EmptyState(
+        icon: AppIcon.star,
+        title: '관심 종목이 없습니다',
+        description: '검색 탭에서 종목을 찾아\n별 아이콘을 눌러 추가해 주세요.',
+      );
+    }
 
     if (viewModel.state == LoadState.failed) {
-      return _Failure(
+      return FailureView(
         message: viewModel.errorMessage ?? '시세를 불러오지 못했습니다',
         onRetry: viewModel.load,
       );
@@ -150,83 +158,6 @@ class _Header extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Empty extends StatelessWidget {
-  const _Empty();
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColors colors = context.colors;
-    final AppDimens dimens = context.dimens;
-
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: dimens.space4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            AppIcon(
-              AppIcon.star,
-              size: dimens.iconEmpty,
-              color: colors.textTertiary,
-            ),
-            SizedBox(height: dimens.space3),
-            Text(
-              '관심 종목이 없습니다',
-              style: AppTypography.title.copyWith(color: colors.textSecondary),
-            ),
-            SizedBox(height: dimens.space3),
-            Text(
-              '검색 탭에서 종목을 찾아\n별 아이콘을 눌러 추가해 주세요.',
-              textAlign: TextAlign.center,
-              style: AppTypography.caption.copyWith(
-                color: colors.textTertiary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 시안에 없는 상태다. 사용자가 할 수 있는 일이 다시 시도 하나뿐이라 단순하게 둔다.
-class _Failure extends StatelessWidget {
-  const _Failure({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColors colors = context.colors;
-    final AppDimens dimens = context.dimens;
-
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: dimens.space4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: AppTypography.body.copyWith(color: colors.textSecondary),
-            ),
-            SizedBox(height: dimens.space3),
-            TextButton(
-              onPressed: onRetry,
-              style: TextButton.styleFrom(
-                foregroundColor: colors.accentDefault,
-              ),
-              child: Text('다시 시도', style: AppTypography.label),
-            ),
-          ],
-        ),
       ),
     );
   }

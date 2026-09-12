@@ -203,6 +203,23 @@ void main() {
       expect(viewModel.rows, isEmpty);
       expect(viewModel.query, '없는종목'); // 안내 문구에 넣을 검색어가 남아 있다
     });
+
+    test('짧은 검색어는 문구에 그대로 넣는다', () {
+      final viewModel = viewModelWith(StubStockRepository());
+
+      viewModel.onQueryChanged('  삼성전자  ');
+
+      expect(viewModel.queryLabel, '삼성전자');
+    });
+
+    test('긴 검색어는 20자에서 자른다', () {
+      final viewModel = viewModelWith(StubStockRepository());
+
+      viewModel.onQueryChanged('가나다라마바사아자차카타파하가나다라마바사아자차');
+
+      // 자르지 않으면 뒤 문장이 화면 밖으로 밀린다.
+      expect(viewModel.queryLabel, '가나다라마바사아자차카타파하가나다라마바…');
+    });
   });
 
   group('관심 등록', () {
