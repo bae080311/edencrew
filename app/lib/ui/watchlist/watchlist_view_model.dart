@@ -67,8 +67,15 @@ class WatchlistViewModel extends ChangeNotifier {
       await _fetchQuotes();
       _state = LoadState.ready;
     } on Object catch (error) {
-      _state = LoadState.failed;
-      _errorMessage = _messageOf(error);
+      if (_quotes.isEmpty) {
+        _state = LoadState.failed;
+        _errorMessage = _messageOf(error);
+      } else {
+        // 이미 받아둔 시세가 있으면 목록을 지우지 않는다 — refresh() 와 같은
+        // 정책이다. 관심을 하나 더 등록해 다시 조회하다 실패했을 때, 멀쩡한
+        // 행까지 전체 실패 화면으로 덮으면 사용자가 잃는 것이 더 크다.
+        _state = LoadState.ready;
+      }
     }
     notifyListeners();
 
@@ -76,8 +83,14 @@ class WatchlistViewModel extends ChangeNotifier {
   }
 
   /// 상단 새로고침. 진행 중이면 같은 요청을 겹치지 않는다.
+  ///
+  /// `load()` 가 도는 중에도 막는다. 느린 요청에서 새로고침을 누르면 같은 조회가
+  /// 두 번 나가고, 늦게 온 응답이 더 새 시세를 덮거나 성공한 뒤에 실패 상태를
+  /// 남길 수 있다.
   Future<void> refresh() async {
-    if (_isRefreshing || _favorites.isEmpty) return;
+    if (_isRefreshing || _state == LoadState.loading || _favorites.isEmpty) {
+      return;
+    }
 
     _isRefreshing = true;
     notifyListeners();

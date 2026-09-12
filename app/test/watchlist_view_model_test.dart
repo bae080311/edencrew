@@ -35,7 +35,9 @@ class StubStockRepository implements StockRepository {
   });
 
   final Map<String, Quote> quotes;
-  final Object? error;
+
+  /// 도중에 바꿔 가며 "처음엔 성공, 다음엔 실패" 를 만든다.
+  Object? error;
 
   /// 요청이 나간 뒤 관심 목록이 바뀌는 상황을 만들려면 응답이 바로 끝나면 안 된다.
   final Duration? delay;
@@ -363,6 +365,46 @@ void main() {
         LoadState.ready,
         reason: '관심이 비었는데 네트워크 오류 화면이 남는다',
       );
+    });
+  });
+
+  group('중복 요청과 부분 실패', () {
+    test('받아둔 시세가 있으면 재조회가 실패해도 목록을 남긴다', () async {
+      favorites.toggle(samsung);
+      final repository = StubStockRepository(
+        quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+      );
+      final viewModel = viewModelWith(repository);
+      await viewModel.load();
+
+      // 다른 화면에서 하나 더 등록 → 재조회가 도는데 이번엔 실패한다.
+      repository.error = Exception('network');
+      favorites.toggle(hynix);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(
+        viewModel.state,
+        LoadState.ready,
+        reason: '멀쩡한 행까지 전체 실패 화면으로 덮었다',
+      );
+      final rowOfSamsung = viewModel.rows.firstWhere((r) => r.symbol == '005930');
+      expect(rowOfSamsung.isSkeleton, isFalse);
+    });
+
+    test('조회 중에 누른 새로고침은 같은 조회를 겹치지 않는다', () async {
+      favorites.toggle(samsung);
+      final repository = StubStockRepository(
+        delay: const Duration(milliseconds: 30),
+        quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+      );
+      final viewModel = viewModelWith(repository);
+
+      final Future<void> loading = viewModel.load();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await viewModel.refresh(); // 느린 조회 중에 새로고침을 누른 상황
+
+      await loading;
+      expect(repository.requests.length, 1, reason: '조회가 두 번 나갔다');
     });
   });
 }
