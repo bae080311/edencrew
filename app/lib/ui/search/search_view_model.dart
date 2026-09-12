@@ -6,6 +6,7 @@ import '../../data/model/stock.dart';
 import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
 import '../common/load_state.dart';
+import '../common/debug_log.dart';
 import 'search_ui_model.dart';
 
 /// 검색 화면의 상태와 계산을 맡는다.
@@ -97,8 +98,9 @@ class SearchViewModel extends ChangeNotifier {
       if (requestId != _requestId) return; // 지난 요청의 응답은 버린다
       _results = results;
       _state = LoadState.ready;
-    } on Object {
+    } on Object catch (error) {
       if (requestId != _requestId) return;
+      logSwallowed('검색', error);
       _results = const <Stock>[];
       _state = LoadState.failed;
       _errorMessage = '검색에 실패했습니다';
