@@ -35,7 +35,7 @@ cd app && flutter test
 - [ ] **직접 판단한 부분과 이유** — 토스트 노출 시간·사라지는 방식, 로딩/네트워크 에러/긴 종목명 오버플로, 시세 못 받은 행의 정렬, Figma 와 다르게 구현한 부분
 - [ ] **막혔던 지점과 어떻게 접근했는지**
 - [ ] AI 도구를 어떤 범위로 썼고 어떤 부분을 직접 재작성했는지 한 문단
-- [ ] `docs/ARCHITECTURE.md` 링크
+- [ ] `ARCHITECTURE.md` 링크
 
 스타터 README 가 그대로 남아 있으면 안 된다(본인 프로젝트 문서로 덮어쓰라는 요구).
 
@@ -60,7 +60,7 @@ git status --short
 
 ## 6. 메일 초안
 
-제목: `[과제 제출] Flutter 신입 개발자 과제 - 배경진` — **안내 메일이 지정한 형식**이다. `app/docs/ASSIGNMENT.md` 의 `[Flutter 과제] 홍길동` 은 템플릿 예시이므로 따르지 않는다(`.claude/plan/brief.md`).
+제목: `[과제 제출] Flutter 신입 개발자 과제 - 배경진` — **안내 메일이 지정한 형식**이다. `docs/ASSIGNMENT.md` 의 `[Flutter 과제] 홍길동` 은 템플릿 예시이므로 따르지 않는다(`.claude/plan/brief.md`).
 
 본문에 담을 것:
 - 과제 1 GitHub 저장소 링크 (public)

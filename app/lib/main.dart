@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'app.dart';
+
 import 'data/repository/fake_stock_repository.dart';
 import 'data/repository/naver_stock_repository.dart';
 import 'data/repository/stock_repository.dart';
 import 'state/favorites_store.dart';
-import 'theme/theme.dart';
-import 'ui/start_here_view.dart';
+import 'ui/watchlist/watchlist_view_model.dart';
 
 /// 개발용 목업 전환. **기본값은 실제 endpoint 조회**다.
 ///
@@ -23,6 +24,12 @@ void main() {
         Provider<StockRepository>(create: (_) => createStockRepository()),
         // 관심 상태 단일 원천 — 세 화면이 이 객체 하나를 본다.
         ChangeNotifierProvider<FavoritesStore>(create: (_) => FavoritesStore()),
+        ChangeNotifierProvider<WatchlistViewModel>(
+          create: (BuildContext context) => WatchlistViewModel(
+            repository: context.read<StockRepository>(),
+            favorites: context.read<FavoritesStore>(),
+          ),
+        ),
       ],
       child: const EdencrewAssignmentApp(),
     ),
@@ -37,17 +44,4 @@ StockRepository createStockRepository() {
     loadAsset: (String path) async =>
         (await rootBundle.load(path)).buffer.asUint8List(),
   );
-}
-
-class EdencrewAssignmentApp extends StatelessWidget {
-  const EdencrewAssignmentApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '이든크루 평가 과제',
-      theme: AppTheme.dark,
-      home: const StartHereView(),
-    );
-  }
 }

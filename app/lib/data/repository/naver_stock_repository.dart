@@ -1,6 +1,11 @@
 import 'dart:math';
 
 import '../dto/daily_price_dto.dart';
+import '../dto/sise_day_page_dto.dart';
+import '../mapper/daily_price_mapper.dart';
+import '../mapper/quote_mapper.dart';
+import '../mapper/stock_meta_mapper.dart';
+import '../mapper/stock_search_mapper.dart';
 import '../dto/realtime_quote_dto.dart';
 import '../dto/stock_meta_dto.dart';
 import '../dto/stock_search_dto.dart';
@@ -23,8 +28,10 @@ class NaverStockRepository implements StockRepository {
   final NaverApi _api;
   final SiseDayParser _parser;
 
-  final Map<String, Map<int, List<DailyPriceDto>>> _pageCache =
-      <String, Map<int, List<DailyPriceDto>>>{};
+  /// 완료된 결과가 아니라 **진행 중인 요청**을 담는다. 결과만 캐시하면 아직
+  /// 도착하지 않은 페이지를 없는 것으로 보고 같은 페이지를 또 받는다.
+  final Map<String, Map<int, Future<List<DailyPriceDto>>>> _pageCache =
+      <String, Map<int, Future<List<DailyPriceDto>>>>{};
   final Map<String, int> _lastPage = <String, int>{};
   final Map<String, Stock> _metaCache = <String, Stock>{};
 
@@ -65,45 +72,58 @@ class NaverStockRepository implements StockRepository {
     String symbol,
     ChartPeriod period,
   ) async {
-    final Map<int, List<DailyPriceDto>> cache = _pageCache.putIfAbsent(
+    final Map<int, Future<List<DailyPriceDto>>> cache = _pageCache.putIfAbsent(
       symbol,
-      () => <int, List<DailyPriceDto>>{},
+      () => <int, Future<List<DailyPriceDto>>>{},
     );
 
     // `lastPage` 를 모르는 상태에서 여러 페이지를 한꺼번에 요청하면 초과 요청이
     // 섞인다. 1페이지를 먼저 받아 마지막 페이지를 확정한 뒤 나머지를 병렬로 받는다.
     if (_lastPage[symbol] == null && !cache.containsKey(1)) {
-      await _loadPage(symbol, 1, cache);
+      await _pageOf(symbol, 1, cache);
     }
 
     final int until = min(period.pageCount, _lastPage[symbol] ?? 1);
-    final List<int> missing = <int>[
-      for (int page = 1; page <= until; page++)
-        if (!cache.containsKey(page)) page,
-    ];
-    await Future.wait(missing.map((page) => _loadPage(symbol, page, cache)));
+    final List<List<DailyPriceDto>> pages = await Future.wait(
+      <Future<List<DailyPriceDto>>>[
+        for (int page = 1; page <= until; page++) _pageOf(symbol, page, cache),
+      ],
+    );
 
     final items = <DailyPrice>[];
-    for (int page = 1; page <= until; page++) {
-      final List<DailyPriceDto>? cached = cache[page];
-      if (cached == null) continue;
-      items.addAll(cached.map((dto) => dto.toDailyPrice()));
+    for (final List<DailyPriceDto> page in pages) {
+      items.addAll(page.map((dto) => dto.toDailyPrice()));
     }
     // 1페이지 = 10거래일이라 마지막 페이지에서 기간보다 며칠 더 온다.
     return items.take(period.tradingDays).toList(growable: false);
   }
 
-  Future<void> _loadPage(
+  /// 같은 페이지를 동시에 요청하면 먼저 시작한 요청을 함께 기다린다.
+  Future<List<DailyPriceDto>> _pageOf(
     String symbol,
     int page,
-    Map<int, List<DailyPriceDto>> cache,
-  ) async {
+    Map<int, Future<List<DailyPriceDto>>> cache,
+  ) {
+    final Future<List<DailyPriceDto>>? inFlight = cache[page];
+    if (inFlight != null) return inFlight;
+
+    // 실패한 요청까지 남으면 다시 시도할 수 없어 캐시에서 걷어낸다.
+    final Future<List<DailyPriceDto>> request = _loadPage(symbol, page)
+        .onError<Object>((Object error, StackTrace stack) {
+          cache.remove(page);
+          throw error;
+        });
+    cache[page] = request;
+    return request;
+  }
+
+  Future<List<DailyPriceDto>> _loadPage(String symbol, int page) async {
     final SiseDayPageDto parsed = _parser.parse(
       await _api.fetchSiseDayPage(symbol, page),
       requestedPage: page,
     );
-    cache[page] = parsed.items;
     _lastPage[symbol] = parsed.lastPage;
+    return parsed.items;
   }
 
 }

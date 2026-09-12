@@ -1,6 +1,6 @@
 # Naver 데이터
 
-`data/` 를 만지기 전에 읽는다. 상세 명세는 `app/docs/NAVER_API.md` 원문이 기준이다.
+`data/` 를 만지기 전에 읽는다. 상세 명세는 `docs/NAVER_API.md` 원문이 기준이다.
 
 ## 완료 기준은 실제 연동이다
 

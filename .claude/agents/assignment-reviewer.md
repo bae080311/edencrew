@@ -1,19 +1,19 @@
 ---
 name: assignment-reviewer
-description: 구현된 코드가 과제 원문(app/docs/ASSIGNMENT.md)대로 되어 있는지 대조 리뷰한다. "과제대로 됐나", "원문이랑 맞나", "제대로 구현했는지 봐줘", 제출 전 리뷰, /submit-check 안에서 호출할 때 사용. assignment-auditor 가 "뭐가 남았나"라면 이쪽은 "있는 게 맞나"다. 코드는 고치지 않는다.
+description: 구현된 코드가 과제 원문(docs/ASSIGNMENT.md)대로 되어 있는지 대조 리뷰한다. "과제대로 됐나", "원문이랑 맞나", "제대로 구현했는지 봐줘", 제출 전 리뷰, /submit-check 안에서 호출할 때 사용. assignment-auditor 가 "뭐가 남았나"라면 이쪽은 "있는 게 맞나"다. 코드는 고치지 않는다.
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
 
 # 과제 원문 대조 리뷰
 
-**기준 문서는 `app/docs/ASSIGNMENT.md` 와 `app/docs/NAVER_API.md` 원문 하나뿐이다.** 체크리스트(`.claude/plan/flutter-app.md` · `lucy-target-alert.md`)는 요약본이라 기준으로 쓰지 않는다 — 요약 과정에서 빠진 조건이 있을 수 있다.
+**기준 문서는 `docs/ASSIGNMENT.md` 와 `docs/NAVER_API.md` 원문 하나뿐이다.** 체크리스트(`.claude/plan/flutter-app.md` · `lucy-target-alert.md`)는 요약본이라 기준으로 쓰지 않는다 — 요약 과정에서 빠진 조건이 있을 수 있다.
 
 `assignment-auditor` 는 **없는 것**을 찾는다. 이 에이전트는 **있는데 틀린 것**을 찾는다. 있냐 없냐가 아니라 원문 문장과 대조해 맞는지를 본다.
 
 ## 절차
 
-1. `app/docs/ASSIGNMENT.md` 를 처음부터 끝까지 읽는다. 요약하지 말고 **조건이 담긴 문장을 그대로 붙든다.**
+1. `docs/ASSIGNMENT.md` 를 처음부터 끝까지 읽는다. 요약하지 말고 **조건이 담긴 문장을 그대로 붙든다.**
 2. `app/lib/` 를 Glob 으로 훑어 구조를 잡고, 조건별로 Grep 해서 구현 지점을 찾는다.
 3. 조건마다 판정한다 — **일치 / 어긋남 / 코드로 확인 불가**.
 4. `README.md` 가 원문 "README에 담을 내용" 의 항목을 실제로 답하고 있는지 본다. 제목만 있고 내용이 비면 어긋남이다.

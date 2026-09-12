@@ -1,5 +1,3 @@
-import '../model/daily_price.dart';
-
 /// 일별 시세 HTML 표의 한 행. 값은 원본 형식을 유지한다.
 class DailyPriceDto {
   const DailyPriceDto({
@@ -23,25 +21,4 @@ class DailyPriceDto {
   final int highPrice;
   final int lowPrice;
   final int accumulatedTradingVolume;
-}
-
-extension DailyPriceDtoMapper on DailyPriceDto {
-  /// 날짜를 `yyyyMMdd` 로 정규화한다 — 앱 내부는 이 형식만 쓴다.
-  DailyPrice toDailyPrice() => DailyPrice(
-    date: localDate.replaceAll('.', ''),
-    close: closePrice,
-    diff: previousDayCompare,
-    open: openPrice,
-    high: highPrice,
-    low: lowPrice,
-    volume: accumulatedTradingVolume,
-  );
-}
-
-/// 일별 시세 한 페이지. `lastPage` 를 넘겨 초과 요청을 막는다.
-class SiseDayPageDto {
-  const SiseDayPageDto({required this.items, required this.lastPage});
-
-  final List<DailyPriceDto> items;
-  final int lastPage;
 }

@@ -1,5 +1,3 @@
-import '../model/stock.dart';
-
 /// 검색 자동완성 응답의 한 항목. 필드명은 Naver 원본을 유지한다.
 class StockSearchDto {
   const StockSearchDto({
@@ -31,9 +29,6 @@ class StockSearchDto {
       nationCode == 'KOR' &&
       category == 'stock' &&
       _domesticSymbol.hasMatch(code);
-
-  Stock toStock() =>
-      Stock(symbol: code, name: name, exchangeName: typeName);
 
   factory StockSearchDto.fromJson(Map<String, dynamic> json) => StockSearchDto(
     code: json['code'] as String,
