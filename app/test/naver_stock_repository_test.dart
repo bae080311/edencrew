@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cp949_codec/cp949_codec.dart';
 import 'package:edencrew_assignment_starter/data/model/chart_period.dart';
+import 'package:edencrew_assignment_starter/data/model/daily_price.dart';
 import 'package:edencrew_assignment_starter/data/repository/naver_stock_repository.dart';
 import 'package:edencrew_assignment_starter/data/source/naver_api.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -143,6 +144,34 @@ void main() {
       sorted,
       sorted.toSet().toList(),
       reason: '같은 페이지를 두 번 요청했다: $sorted',
+    );
+  });
+
+  test('기간을 연달아 바꿔도 각 기간이 요구하는 거래일을 다 받는다', () async {
+    final recorder = RecordingSiseDay(delay: const Duration(milliseconds: 20));
+    final repository = NaverStockRepository(
+      api: NaverApi(client: recorder.client),
+    );
+
+    // 1페이지가 아직 오는 중에 1년으로 갈아탄다. 진행 중인 1페이지를 기다리지
+    // 않으면 lastPage 가 아직 없어 요청 범위가 1페이지로 주저앉는다.
+    final Future<List<DailyPrice>> threeMonths = repository.fetchDailyPrices(
+      '005930',
+      ChartPeriod.threeMonths,
+    );
+    final Future<List<DailyPrice>> oneYear = repository.fetchDailyPrices(
+      '005930',
+      ChartPeriod.oneYear,
+    );
+    final List<List<DailyPrice>> results = await Future.wait(
+      <Future<List<DailyPrice>>>[threeMonths, oneYear],
+    );
+
+    expect(results[0].length, ChartPeriod.threeMonths.tradingDays);
+    expect(
+      results[1].length,
+      ChartPeriod.oneYear.tradingDays,
+      reason: '1년이 1페이지(10거래일)로 잘렸다',
     );
   });
 }

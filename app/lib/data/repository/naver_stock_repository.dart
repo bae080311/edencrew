@@ -79,7 +79,12 @@ class NaverStockRepository implements StockRepository {
 
     // `lastPage` 를 모르는 상태에서 여러 페이지를 한꺼번에 요청하면 초과 요청이
     // 섞인다. 1페이지를 먼저 받아 마지막 페이지를 확정한 뒤 나머지를 병렬로 받는다.
-    if (_lastPage[symbol] == null && !cache.containsKey(1)) {
+    //
+    // 이미 나간 1페이지 요청이 있어도 **기다린다**. 캐시에 future 가 있다는 이유로
+    // 건너뛰면 `lastPage` 가 아직 null 이라 아래 `until` 이 1 로 주저앉는다 —
+    // 기간 탭을 빠르게 바꿀 때 1년이 10거래일만 받던 원인이다.
+    // `_pageOf` 가 진행 중인 요청을 함께 기다려 주므로 중복 요청은 나가지 않는다.
+    if (_lastPage[symbol] == null) {
       await _pageOf(symbol, 1, cache);
     }
 
