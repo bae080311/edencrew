@@ -12,8 +12,8 @@ class WatchlistRow extends StatelessWidget {
 
   final WatchlistRowUi row;
 
-  // Figma 레이어 값 — `Scale` 컬렉션에 없어 토큰으로 옮기지 않았다.
-  static const double _identityGap = 2;
+  // 스켈레톤 막대 크기는 이 위젯 한 곳의 상자 크기다. 간격 · 반경 · 아이콘과
+  // 달리 다른 화면이 쓸 값이 아니라 토큰으로 올리지 않았다.
   static const double _skeletonPriceWidth = 64;
   static const double _skeletonPriceHeight = 16;
   static const double _skeletonChangeWidth = 48;
@@ -51,7 +51,7 @@ class WatchlistRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.body.copyWith(color: colors.textPrimary),
                 ),
-                const SizedBox(height: _identityGap),
+                SizedBox(height: dimens.gapTextLine),
                 Text(
                   row.marketLabel,
                   maxLines: 1,
@@ -69,20 +69,20 @@ class WatchlistRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: row.isSkeleton
                 ? _skeleton(colors, dimens)
-                : _quote(colors),
+                : _quote(colors, dimens),
           ),
         ],
       ),
     );
   }
 
-  List<Widget> _quote(AppColors colors) {
+  List<Widget> _quote(AppColors colors, AppDimens dimens) {
     return <Widget>[
       Text(
         row.priceLabel!,
         style: AppTypography.body.copyWith(color: colors.textPrimary),
       ),
-      const SizedBox(height: _identityGap),
+      SizedBox(height: dimens.gapTextLine),
       Text(
         row.changeLabel!,
         style: AppTypography.caption.copyWith(color: _toneColor(colors)),
@@ -98,7 +98,7 @@ class WatchlistRow extends StatelessWidget {
         color: colors.feedbackSkeleton,
         radius: dimens.radiusSm,
       ),
-      const SizedBox(height: _identityGap),
+      SizedBox(height: dimens.gapTextLine),
       _SkeletonBar(
         width: _skeletonChangeWidth,
         height: _skeletonChangeHeight,

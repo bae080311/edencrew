@@ -4,12 +4,6 @@ import '../../theme/theme.dart';
 import '../common/app_icon.dart';
 import 'watchlist_sort.dart';
 
-// Figma 레이어 값 — `Scale` 컬렉션에 없다.
-const double _sheetRadius = 16;
-const double _titleHeight = 64;
-const double _itemHeight = 56;
-const double _checkSize = 24;
-
 /// 정렬 바텀시트를 열고 고른 기준을 돌려준다. 그냥 닫으면 null.
 ///
 /// 딤은 `showModalBottomSheet` 기본값(검정 54%)을 쓴다. 시안은 50% 지만
@@ -21,8 +15,10 @@ Future<WatchlistSort?> showWatchlistSortSheet(
   return showModalBottomSheet<WatchlistSort>(
     context: context,
     backgroundColor: context.colors.surfaceOverlay,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(_sheetRadius)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(context.dimens.radiusSheet),
+      ),
     ),
     builder: (BuildContext sheetContext) =>
         _SortSheet(current: current, onSelected: Navigator.of(sheetContext).pop),
@@ -46,7 +42,7 @@ class _SortSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Container(
-            height: _titleHeight,
+            height: dimens.sheetTitleHeight,
             alignment: Alignment.centerLeft,
             padding: EdgeInsets.symmetric(horizontal: dimens.space6),
             child: Text(
@@ -85,7 +81,7 @@ class _SortItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        constraints: const BoxConstraints(minHeight: _itemHeight),
+        constraints: BoxConstraints(minHeight: dimens.rowMinHeight),
         padding: EdgeInsets.symmetric(
           horizontal: dimens.space6,
           vertical: dimens.space3,
@@ -103,7 +99,7 @@ class _SortItem extends StatelessWidget {
             if (isSelected)
               AppIcon(
                 AppIcon.check,
-                size: _checkSize,
+                size: dimens.iconLg,
                 color: colors.textPrimary,
               ),
           ],

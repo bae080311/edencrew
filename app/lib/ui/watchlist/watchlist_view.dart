@@ -10,9 +10,6 @@ import 'watchlist_sort_sheet.dart';
 import 'watchlist_ui_model.dart';
 import 'watchlist_view_model.dart';
 
-// Figma 레이어 값 — `Scale` 컬렉션에 없다.
-const double _emptyIconSize = 40;
-
 /// 관심 종목 목록 화면. 배치만 하고 정렬 · 포맷은 ViewModel 이 끝낸 값을 받는다.
 class WatchlistView extends StatefulWidget {
   const WatchlistView({super.key});
@@ -39,7 +36,10 @@ class _WatchlistViewState extends State<WatchlistView> {
       children: <Widget>[
         _Header(
           sort: viewModel.sort,
-          isRefreshing: viewModel.isRefreshing,
+          // 조회 중에도 막는다. ViewModel 이 중복 요청을 무시하므로 눌러도
+          // 아무 일이 없는데, 눌리는 것처럼 보이면 안 된다.
+          isBusy:
+              viewModel.isRefreshing || viewModel.state == LoadState.loading,
           onSortTap: () => _pickSort(viewModel),
           onRefreshTap: viewModel.refresh,
         ),
@@ -83,13 +83,13 @@ class _WatchlistViewState extends State<WatchlistView> {
 class _Header extends StatelessWidget {
   const _Header({
     required this.sort,
-    required this.isRefreshing,
+    required this.isBusy,
     required this.onSortTap,
     required this.onRefreshTap,
   });
 
   final WatchlistSort sort;
-  final bool isRefreshing;
+  final bool isBusy;
   final VoidCallback onSortTap;
   final VoidCallback onRefreshTap;
 
@@ -140,13 +140,11 @@ class _Header extends StatelessWidget {
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 // 갱신 중에는 같은 요청을 겹치지 않도록 막고 색을 낮춘다.
-                onTap: isRefreshing ? null : onRefreshTap,
+                onTap: isBusy ? null : onRefreshTap,
                 child: AppIcon(
                   AppIcon.refresh,
                   size: dimens.iconMd,
-                  color: isRefreshing
-                      ? colors.textDisabled
-                      : colors.textSecondary,
+                  color: isBusy ? colors.textDisabled : colors.textSecondary,
                 ),
               ),
             ],
@@ -173,7 +171,7 @@ class _Empty extends StatelessWidget {
           children: <Widget>[
             AppIcon(
               AppIcon.star,
-              size: _emptyIconSize,
+              size: dimens.iconEmpty,
               color: colors.textTertiary,
             ),
             SizedBox(height: dimens.space3),

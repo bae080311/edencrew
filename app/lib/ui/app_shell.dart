@@ -4,10 +4,6 @@ import '../theme/theme.dart';
 import 'common/app_icon.dart';
 import 'watchlist/watchlist_view.dart';
 
-// Figma 레이어 값 — `Scale` 컬렉션에 없다.
-const double _tabIconSize = 22;
-const double _tabLabelGap = 3;
-
 /// 하단 탭으로 관심 · 검색을 오간다.
 ///
 /// 두 화면의 상태를 유지해야 해서 `IndexedStack` 을 쓴다. 탭을 옮겼다 돌아왔을 때
@@ -104,6 +100,7 @@ class _Tab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
     final Color color = isActive ? colors.navActive : colors.navInactive;
 
     return Expanded(
@@ -111,12 +108,12 @@ class _Tab extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: context.dimens.space1),
+          padding: EdgeInsets.symmetric(vertical: dimens.space1),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              AppIcon(icon, size: _tabIconSize, color: color),
-              const SizedBox(height: _tabLabelGap),
+              AppIcon(icon, size: dimens.iconTabBar, color: color),
+              SizedBox(height: dimens.gapTabLabel),
               Text(label, style: AppTypography.caption.copyWith(color: color)),
             ],
           ),
