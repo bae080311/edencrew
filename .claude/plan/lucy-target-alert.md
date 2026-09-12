@@ -13,7 +13,7 @@
 
 ## 준비
 
-- [ ] Lucy Studio 설치 (macOS 설치 파일은 안내 메일 링크)
+- [x] Lucy Studio 설치 (macOS 설치 파일은 안내 메일 링크)
 - [ ] 계정 생성 · 워크스페이스 초기 설정
 - [ ] 튜토리얼 1회 따라하기 (처음이면 권장)
 
@@ -124,30 +124,38 @@
 
 ## 스크립트
 
-API 이름은 **Lucy Studio 에 들어있는 한국어 스크립트 문서**(`docs.ko.json`)와
-`docs.edencrew.com` 의 `로직 & 스크립팅` · `튜토리얼` 에서 확인한 것이다. 지어낸 이름이 없다.
+API 는 **Lucy Studio 앱 번들의 세 파일로 전부 대조했다**(2026-09-12). 지어낸 이름이 없다.
 
-| 필요한 것 | API |
+| 파일 | 무엇이 들어 있나 |
 | --- | --- |
-| 이벤트 연결 | `onStart()` 안에서 `위젯.onClick = 함수` (아이콘 이미지면 `onTap`) |
-| 다이얼로그 열기 | `$form.openDialog(폼경로, linkArg, 콜백, options)` — **콜백이 3번째다.** `options.barrierDismissible` 기본 `true` |
-| 다이얼로그 닫기 + 값 전달 | `$form.closeDialog(result)` → 연 쪽의 콜백으로 들어온다 |
-| 폼 로컬 변수 | `$form.setVar(이름, 값)` / `$form.getVar(이름)` |
-| 반복 위젯(리스트) | `list.clear()` · `list.add()` · `list.current = i` · `list.remove(i)` · `list.count` |
-| 컴포넌트 값 주고받기 | `comp.setVar(이름, 값)` · `comp.getVar(이름)` · `comp.onVarChanged = (이름, 값, 이전) => {}` — **노출(readwrite)한 변수만** 된다. 비공개 변수는 아무 일도 일어나지 않는다 |
-| 텍스트 쓰기 | `txt.setText("...")` |
-| 입력값 읽기 | `edt.getText()` (또는 `edt.text`) |
-| 속성 · 스타일 | `위젯.setProperty(이름, 값)` · `위젯.setStyleProperty(타입, 경로, 값)` |
+| `assets/script/objet/base.objet.json` | **모든 위젯이 상속하는 베이스** — `visible`·`disable`·`tag`, `setProperty`·`setStyleProperty`, `onTap` 계열 |
+| `assets/script/modules/schema.json` | 위젯별 `methods` · `setters` · `getters` · `events` (101개 타입) |
+| `assets/script/docs/docs.ko.json` | 한국어 설명과 예제 (976항목) |
 
-> `list.current = i` 를 설정하면 **그 뒤의 속성 쓰기가 해당 행을 대상으로** 한다.
-> 행 컴포넌트 안 위젯에 값을 넣는 방식이 이것이다.
+> `schema.json` 의 `methods` 만 보면 `visible`·`current`·`setProperty` 가 없는 것처럼 보인다.
+> 프로퍼티는 `setters`/`getters`, 이벤트는 `events` 에 따로 있고 공통분은 `base.objet.json` 에 있다.
+
+| 필요한 것 | API | 출처 |
+| --- | --- | --- |
+| 버튼 클릭 | `btn.onClick = fn` | `ButtonObjet.events` |
+| 버튼 아닌 위젯 탭 | `위젯.onTap = fn` | **베이스** — Icon·Image·Column 어디에나 붙는다 |
+| 보임/숨김 | `위젯.visible = bool` | 베이스 setter. `setProperty("visible", bool)` 도 같은 것 |
+| 다이얼로그 열기 | `$form.openDialog(formPath, linkArg, jsCallback, options)` | **콜백이 3번째** |
+| 다이얼로그 닫기 + 값 전달 | `$form.closeDialog(result)` → 연 쪽 콜백으로 들어온다 | |
+| 폼 로컬 변수 | `$form.setVar(name, value)` / `getVar(name)` / `clearVar(name)` | |
+| 반복 위젯 | `list.clear()` · `list.add()` · `list.remove(i)` · `list.count` · `list.current` | `IteratorObjet` |
+| **행 하나 갱신** | `list.setState(i, fn)` — 바인딩 스코프를 i 행으로 두고 콜백을 돌린 뒤 그 행만 다시 빌드 | 이 용도의 정식 API |
+| 컴포넌트 값 주고받기 | `comp.setVar` · `comp.getVar` · `comp.onVarChanged = (name, value, prev) => {}` | **노출(readwrite) 변수만** |
+| 텍스트 쓰기 | `txt.setText(s)` 또는 `txt.text = s` | |
+| **텍스트 색을 토큰으로** | `txt.setTextColor("price/up/text")` — 색상 **토큰 문자열**을 받는다 | 행 색을 variant 없이 가른다 |
+| 입력값 읽기 | `edt.getText()` 또는 `edt.text` | |
+| 스타일 속성 | `위젯.setStyleProperty(styleName, propName, value)` — **3인자** | 베이스 |
 
 ### 행 컴포넌트 `AlertRow`
 
-과제가 **"행은 컴포넌트로 분리해 재사용"** 을 필수로 요구한다. 그런데 컴포넌트 안의
-위젯은 바깥 폼에서 id 로 잡을 수 없다 — API 문서가 "**노출된**(읽기/읽기쓰기) 컴포넌트
-변수"만 읽고 쓸 수 있고 "비공개 변수는 아무 동작도 하지 않는다"고 못 박았다.
-그래서 주고받을 값을 변수로 노출한다.
+과제가 **"행은 컴포넌트로 분리해 재사용"** 을 필수로 요구한다. 컴포넌트 안의 위젯은
+바깥 폼에서 id 로 잡을 수 없다 — 문서가 "노출된(읽기/읽기쓰기) 변수"만 읽고 쓸 수 있고
+비공개 변수는 아무 동작도 하지 않는다고 못 박았다. 그래서 주고받을 값을 변수로 노출한다.
 
 | 노출 변수 | 접근 | 쓰임 |
 | --- | --- | --- |
@@ -155,20 +163,33 @@ API 이름은 **Lucy Studio 에 들어있는 한국어 스크립트 문서**(`do
 | `priceLabel` | readwrite | **이미 `200,000` 으로 포맷된 문자열** — 포맷은 부모가 끝낸다 |
 | `side` | readwrite | `"buy"` / `"sell"` — 목표가 색을 가른다 |
 
-컴포넌트 **안에서는** 이 변수를 위젯 속성에 **바인딩**한다(Binding 탭에서 속성과 변수를 연결).
-`name` → 종목명 Text 의 text, `priceLabel` → 목표가 Text 의 text.
+`name` · `priceLabel` 은 컴포넌트 안에서 Text 의 text 속성에 **바인딩**한다(Binding 탭).
+색은 컴포넌트 자신의 스크립트에서 처리한다 — `setTextColor` 가 토큰 문자열을 받으므로
+variant 를 따로 만들 필요가 없다.
 
-색은 둘 중 하나다.
+```js
+// 컴포넌트 AlertRow 의 스크립트
+function onStart() {
+  comp.onVarChanged = function (name, value) {
+    if (name === "side") applySide(value);
+  };
+  applySide(comp.getVar("side"));
+}
 
-1. `side` 를 목표가 Text 의 색 속성에 바인딩한다.
-2. 바인딩으로 색을 못 잡으면 **컴포넌트에 `buy` · `sell` 두 변형(variant)** 을 만들고
-   행에서 변형을 고른다. 확실한 쪽이다.
+// 목표가 색이 매도/매수 구분이다. 항목에 라벨을 따로 달지 않는다.
+function applySide(side) {
+  txtPrice.setTextColor(side === "sell" ? "price/down/text" : "price/up/text");
+}
+```
+
+> 토큰 이름(`price/up/text`)은 이 프로젝트의 색 토큰 이름과 같아야 한다.
+> 스튜디오 색상 패널에서 실제 토큰 이름을 확인하고 맞춘다.
 
 ### 페이지 `targetAlert`
 
 ```js
 function onStart() {
-  btnPlus.onClick = openAddDialog;
+  btnPlus.onClick = openAddDialog;   // + 를 아이콘/이미지로 뒀으면 onTap
   render();
 }
 
@@ -178,11 +199,11 @@ function alerts() {
 }
 
 function openAddDialog() {
-  // 인자 순서는 (formPath, linkArg, jsCallback, options) 다. 콜백이 options 보다 앞이다.
+  // 인자 순서는 (formPath, linkArg, jsCallback, options). 콜백이 options 보다 앞이다.
   $form.openDialog("targetAlertAdd", null, function (result) {
-    if (!result) return;              // x 로 닫았거나 배경을 탭한 경우 — 아무것도 추가하지 않는다
+    if (!result) return;             // x 로 닫았거나 배경을 탭한 경우 — 아무것도 추가하지 않는다
     var list = alerts();
-    list.push(result);                // { name, price, side }
+    list.push(result);               // { name, price, side }
     $form.setVar("alerts", list);
     render();
   }, { barrierDismissible: true });
@@ -192,20 +213,24 @@ function render() {
   var list = alerts();
 
   // 빈 상태와 목록은 둘 중 하나만 보인다. 헤더는 어느 쪽이든 그대로다.
-  emptyState.setProperty("visible", list.length === 0);
-  lsvAlert.setProperty("visible", list.length > 0);
+  emptyState.visible = list.length === 0;
+  lsvAlert.visible = list.length > 0;
 
   lsvAlert.clear();
   for (var i = 0; i < list.length; i++) {
     lsvAlert.add();
-    lsvAlert.current = i;             // 이 뒤의 쓰기는 i 번째 행으로 간다
-
-    // 행은 컴포넌트다. 컴포넌트 안 위젯은 바깥에서 id 로 못 잡고,
-    // **노출 변수**로만 주고받는다. 포맷은 넘기기 전에 끝낸다.
-    cmpRow.setVar("name", list[i].name);
-    cmpRow.setVar("priceLabel", thousands(list[i].price));
-    cmpRow.setVar("side", list[i].side);
+    // setState 가 바인딩 스코프를 i 행으로 잡아 준다. 그 안의 쓰기는 i 행으로 간다.
+    lsvAlert.setState(i, makeRowSetter(list[i]));
   }
+}
+
+// 클로저를 루프 밖에서 만든다 — var 는 블록 스코프가 아니라 i 가 공유된다.
+function makeRowSetter(item) {
+  return function () {
+    cmpRow.setVar("name", item.name);
+    cmpRow.setVar("priceLabel", thousands(item.price));
+    cmpRow.setVar("side", item.side);
+  };
 }
 
 // 천 단위 구분 쉼표. 과제 1 의 `core/format.dart` 와 같은 규칙이다.
@@ -218,13 +243,14 @@ function thousands(value) {
 
 ```js
 function onStart() {
-  btnClose.onClick = function () { $form.closeDialog(null); };
+  btnClose.onTap = function () { $form.closeDialog(null); };   // x 가 Button 이면 onClick
   btnSell.onClick = function () { submit("sell"); };
   btnBuy.onClick = function () { submit("buy"); };
 }
 
 function submit(side) {
   var name = edtName.getText().trim();
+  // 입력 중에 막으면 붙여넣기가 불편하다. 등록 시점에 숫자만 남긴다.
   var price = edtPrice.getText().replace(/[^0-9]/g, "");
 
   // 빈 값 검증까지가 필수다. 둘 중 하나라도 비면 닫지 않는다.
@@ -236,12 +262,18 @@ function submit(side) {
 
 ### 스튜디오에서 확인할 것
 
-스크립트는 문서 기준으로 맞지만 **위젯 id 와 속성 이름은 스튜디오 속성 패널에서 확인해야 한다.**
+API 는 대조가 끝났다. 남은 건 **스튜디오에서만 알 수 있는 것** 넷이다.
 
-- 위젯 id 를 위 스크립트와 같은 이름(`btnPlus` · `lsvAlert` · `cmpRow` · `emptyState` · `edtName` · `edtPrice` · `btnClose` · `btnSell` · `btnBuy`)으로 맞추면 그대로 붙는다. `cmpRow` 는 리스트 안에 놓은 **행 컴포넌트 인스턴스**의 id 다.
-- 보임/숨김 속성 이름이 `visible` 이 맞는지 패널에서 본다.
-- **`lsvAlert.current = i` 를 준 뒤의 `cmpRow.setVar(...)` 가 그 행의 인스턴스로 가는지** 두 행을 넣어 확인한다. `current` 문서는 "이후의 프로퍼티 쓰기가 해당 행을 대상으로 한다"고만 적혀 있어 컴포넌트 변수까지 같은 범위인지는 직접 봐야 한다. 아니라면 행을 컴포넌트 대신 리스트 안에 직접 그리고(튜토리얼이 이 방식이다) 재사용은 다른 화면에서 가져다 쓰는 것으로 만족한다.
-- `+` 아이콘을 Button 이 아니라 이미지로 두면 `onClick` 대신 `onTap`.
+- **`onStart` 가 폼 스크립트의 진입점 이름이 맞는지.** 번들 스키마에 없다 — 스크립트 편집기가
+  만들어 주는 생명주기 훅이라 편집기에서 확인한다. 이름이 다르면 그 이름으로 바꾼다.
+- **`lsvAlert.setState(i, fn)` 안의 `cmpRow.setVar(...)` 가 i 번째 행 인스턴스로 가는지.**
+  문서는 "바인딩된 프로퍼티"를 말할 뿐 컴포넌트 변수까지 같은 스코프인지는 적지 않았다.
+  두 행을 넣어 확인한다. 아니면 행을 컴포넌트 대신 리스트 안에 직접 그리고(튜토리얼 방식)
+  재사용은 컴포넌트를 다른 자리에서 가져다 쓰는 것으로 만족한다.
+- **색 토큰 이름** — `price/up/text` · `price/down/text` 가 이 프로젝트에 그 이름으로 있는지.
+- 위젯 id 를 위 스크립트와 같은 이름(`btnPlus` · `lsvAlert` · `cmpRow` · `emptyState` ·
+  `txtPrice` · `edtName` · `edtPrice` · `btnClose` · `btnSell` · `btnBuy`)으로 맞추면 그대로 붙는다.
+  `cmpRow` 는 리스트 안에 놓은 **행 컴포넌트 인스턴스**의 id 다.
 
 ---
 
