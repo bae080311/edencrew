@@ -5,3 +5,6 @@
 .claude/plan/brief.md
 .DS_Store
 lucy/*.zip
+
+# 지식 그래프 빌드 산출물 — 재생성 가능하고 커밋 단위를 오염시킨다
+graphify-out/
