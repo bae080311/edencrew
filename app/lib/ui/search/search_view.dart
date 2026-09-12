@@ -106,9 +106,6 @@ class _SearchField extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
 
-  // 시안의 입력 필드 상하 여백. 한 위젯의 상자 값이라 토큰으로 올리지 않았다.
-  static const double _paddingVertical = 10;
-
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
@@ -124,7 +121,7 @@ class _SearchField extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: dimens.space3,
-          vertical: _paddingVertical,
+          vertical: dimens.fieldPaddingVertical,
         ),
         decoration: BoxDecoration(
           color: colors.surfaceSunken,
