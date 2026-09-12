@@ -10,14 +10,19 @@ import 'package:http/testing.dart';
 
 /// 요청한 일별 시세 페이지 번호를 순서대로 기록한다.
 class RecordingSiseDay {
-  RecordingSiseDay({this.lastPage});
+  RecordingSiseDay({this.lastPage, this.delay});
 
   final int? lastPage;
+
+  /// 요청이 겹치는 상황을 만들려면 응답이 바로 끝나면 안 된다.
+  final Duration? delay;
+
   final List<int> requestedPages = <int>[];
 
   http.Client get client => MockClient((http.Request request) async {
     final int page = int.parse(request.url.queryParameters['page']!);
     requestedPages.add(page);
+    if (delay != null) await Future<void>.delayed(delay!);
 
     // 저장해 둔 페이지는 둘뿐이라 그 밖은 1페이지로 응답한다 — 이 테스트가 보는 건
     // 내용이 아니라 요청 횟수다.
@@ -114,5 +119,30 @@ void main() {
     await repository.fetchDailyPrices('000660', ChartPeriod.oneMonth);
 
     expect(recorder.requestedPages..sort(), <int>[1, 2]);
+  });
+
+  test('기간을 연달아 바꿔도 진행 중인 페이지를 다시 받지 않는다', () async {
+    final recorder = RecordingSiseDay(delay: const Duration(milliseconds: 20));
+    final repository = NaverStockRepository(
+      api: NaverApi(client: recorder.client),
+    );
+
+    // 3개월 응답이 아직 오는 중에 1년으로 갈아탄다.
+    final Future<void> threeMonths = repository.fetchDailyPrices(
+      '005930',
+      ChartPeriod.threeMonths,
+    );
+    final Future<void> oneYear = repository.fetchDailyPrices(
+      '005930',
+      ChartPeriod.oneYear,
+    );
+    await Future.wait(<Future<void>>[threeMonths, oneYear]);
+
+    final List<int> sorted = recorder.requestedPages..sort();
+    expect(
+      sorted,
+      sorted.toSet().toList(),
+      reason: '같은 페이지를 두 번 요청했다: $sorted',
+    );
   });
 }

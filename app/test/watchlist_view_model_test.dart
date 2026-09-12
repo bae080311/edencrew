@@ -28,16 +28,24 @@ Quote quoteOf(String symbol, {required int price, required int previousClose}) =
 
 /// 요청 횟수와 실패를 제어하려고 둔 스텁.
 class StubStockRepository implements StockRepository {
-  StubStockRepository({this.quotes = const <String, Quote>{}, this.error});
+  StubStockRepository({
+    this.quotes = const <String, Quote>{},
+    this.error,
+    this.delay,
+  });
 
   final Map<String, Quote> quotes;
   final Object? error;
+
+  /// 요청이 나간 뒤 관심 목록이 바뀌는 상황을 만들려면 응답이 바로 끝나면 안 된다.
+  final Duration? delay;
 
   final List<List<String>> requests = <List<String>>[];
 
   @override
   Future<Map<String, Quote>> fetchQuotes(List<String> symbols) async {
     requests.add(List<String>.of(symbols));
+    if (delay != null) await Future<void>.delayed(delay!);
     if (error != null) throw error!;
     return <String, Quote>{
       for (final String symbol in symbols)
@@ -306,6 +314,55 @@ void main() {
 
       expect(viewModel.rows, isEmpty);
       expect(viewModel.state, LoadState.ready);
+    });
+  });
+
+  group('조회 중에 관심이 바뀌면', () {
+    test('그 사이 등록한 종목도 시세를 받는다', () async {
+      favorites.toggle(samsung);
+      final repository = StubStockRepository(
+        delay: const Duration(milliseconds: 30),
+        quotes: {
+          '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+          '000660': quoteOf('000660', price: 412500, previousClose: 403000),
+        },
+      );
+      final viewModel = viewModelWith(repository);
+
+      final Future<void> loading = viewModel.load();
+      // 첫 요청이 이미 나간 뒤 다른 화면에서 등록한 상황.
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      favorites.toggle(hynix);
+
+      await loading;
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+
+      final rowOfHynix = viewModel.rows.firstWhere((r) => r.symbol == '000660');
+      expect(
+        rowOfHynix.isSkeleton,
+        isFalse,
+        reason: '조회가 끝난 뒤에도 스켈레톤으로 남았다',
+      );
+      expect(repository.requests.length, 2, reason: '끝난 뒤 한 번만 더 받는다');
+    });
+
+    test('실패한 뒤 관심을 모두 해제하면 빈 상태로 돌아간다', () async {
+      favorites.toggle(samsung);
+      final viewModel = viewModelWith(
+        StubStockRepository(error: Exception('network')),
+      );
+      await viewModel.load();
+      expect(viewModel.state, LoadState.failed);
+
+      favorites.remove('005930');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(viewModel.rows, isEmpty);
+      expect(
+        viewModel.state,
+        LoadState.ready,
+        reason: '관심이 비었는데 네트워크 오류 화면이 남는다',
+      );
     });
   });
 }

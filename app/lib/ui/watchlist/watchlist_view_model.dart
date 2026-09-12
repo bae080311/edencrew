@@ -29,6 +29,10 @@ class WatchlistViewModel extends ChangeNotifier {
   LoadState _state = LoadState.initial;
   String? _errorMessage;
   bool _isRefreshing = false;
+
+  /// 조회 중에 등록된 종목이 있으면 켜 둔다. 지금 나간 요청에는 그 종목이
+  /// 들어가지 못했으므로 요청이 끝난 뒤 한 번 더 받아야 한다.
+  bool _reloadRequested = false;
   WatchlistSort _sort = WatchlistSort.price;
 
   LoadState get state => _state;
@@ -45,6 +49,8 @@ class WatchlistViewModel extends ChangeNotifier {
   List<WatchlistRowUi> get rows => _buildRows();
 
   Future<void> load() async {
+    _reloadRequested = false;
+
     if (_favorites.isEmpty) {
       _quotes.clear();
       _state = LoadState.ready;
@@ -65,6 +71,8 @@ class WatchlistViewModel extends ChangeNotifier {
       _errorMessage = _messageOf(error);
     }
     notifyListeners();
+
+    if (_reloadRequested) await load();
   }
 
   /// 상단 새로고침. 진행 중이면 같은 요청을 겹치지 않는다.
@@ -108,13 +116,28 @@ class WatchlistViewModel extends ChangeNotifier {
     // 해제한 종목의 시세는 버린다.
     _quotes.removeWhere((String symbol, _) => !_favorites.contains(symbol));
 
+    // 관심이 비면 불러올 것이 없다. 실패 상태를 들고 있으면 빈 상태 대신
+    // 네트워크 오류 화면이 계속 남는다.
+    if (_favorites.isEmpty && _state == LoadState.failed) {
+      _state = LoadState.ready;
+      _errorMessage = null;
+    }
+
     final bool hasNew = _favorites.symbols.any(
       (String symbol) => !_quotes.containsKey(symbol),
     );
     notifyListeners();
 
+    if (!hasNew) return;
+
+    // 조회 중이면 지금 나간 요청이 이 종목을 담지 못했다. 끝난 뒤로 미룬다.
+    if (_state == LoadState.loading) {
+      _reloadRequested = true;
+      return;
+    }
+
     // 새로 등록된 종목은 스켈레톤으로 먼저 보이고, 시세가 도착하면 채워진다.
-    if (hasNew && _state != LoadState.loading) load();
+    load();
   }
 
   List<WatchlistRowUi> _buildRows() {
