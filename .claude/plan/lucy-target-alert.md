@@ -130,16 +130,39 @@ API 이름은 **Lucy Studio 에 들어있는 한국어 스크립트 문서**(`do
 | 필요한 것 | API |
 | --- | --- |
 | 이벤트 연결 | `onStart()` 안에서 `위젯.onClick = 함수` (아이콘 이미지면 `onTap`) |
-| 다이얼로그 열기 | `$form.openDialog(폼경로, linkArg, options, 콜백)` — `options.barrierDismissible` 기본 `true` |
+| 다이얼로그 열기 | `$form.openDialog(폼경로, linkArg, 콜백, options)` — **콜백이 3번째다.** `options.barrierDismissible` 기본 `true` |
 | 다이얼로그 닫기 + 값 전달 | `$form.closeDialog(result)` → 연 쪽의 콜백으로 들어온다 |
 | 폼 로컬 변수 | `$form.setVar(이름, 값)` / `$form.getVar(이름)` |
 | 반복 위젯(리스트) | `list.clear()` · `list.add()` · `list.current = i` · `list.remove(i)` · `list.count` |
+| 컴포넌트 값 주고받기 | `comp.setVar(이름, 값)` · `comp.getVar(이름)` · `comp.onVarChanged = (이름, 값, 이전) => {}` — **노출(readwrite)한 변수만** 된다. 비공개 변수는 아무 일도 일어나지 않는다 |
 | 텍스트 쓰기 | `txt.setText("...")` |
 | 입력값 읽기 | `edt.getText()` (또는 `edt.text`) |
 | 속성 · 스타일 | `위젯.setProperty(이름, 값)` · `위젯.setStyleProperty(타입, 경로, 값)` |
 
 > `list.current = i` 를 설정하면 **그 뒤의 속성 쓰기가 해당 행을 대상으로** 한다.
 > 행 컴포넌트 안 위젯에 값을 넣는 방식이 이것이다.
+
+### 행 컴포넌트 `AlertRow`
+
+과제가 **"행은 컴포넌트로 분리해 재사용"** 을 필수로 요구한다. 그런데 컴포넌트 안의
+위젯은 바깥 폼에서 id 로 잡을 수 없다 — API 문서가 "**노출된**(읽기/읽기쓰기) 컴포넌트
+변수"만 읽고 쓸 수 있고 "비공개 변수는 아무 동작도 하지 않는다"고 못 박았다.
+그래서 주고받을 값을 변수로 노출한다.
+
+| 노출 변수 | 접근 | 쓰임 |
+| --- | --- | --- |
+| `name` | readwrite | 종목명 |
+| `priceLabel` | readwrite | **이미 `200,000` 으로 포맷된 문자열** — 포맷은 부모가 끝낸다 |
+| `side` | readwrite | `"buy"` / `"sell"` — 목표가 색을 가른다 |
+
+컴포넌트 **안에서는** 이 변수를 위젯 속성에 **바인딩**한다(Binding 탭에서 속성과 변수를 연결).
+`name` → 종목명 Text 의 text, `priceLabel` → 목표가 Text 의 text.
+
+색은 둘 중 하나다.
+
+1. `side` 를 목표가 Text 의 색 속성에 바인딩한다.
+2. 바인딩으로 색을 못 잡으면 **컴포넌트에 `buy` · `sell` 두 변형(variant)** 을 만들고
+   행에서 변형을 고른다. 확실한 쪽이다.
 
 ### 페이지 `targetAlert`
 
@@ -155,13 +178,14 @@ function alerts() {
 }
 
 function openAddDialog() {
-  $form.openDialog("targetAlertAdd", null, { barrierDismissible: true }, function (result) {
+  // 인자 순서는 (formPath, linkArg, jsCallback, options) 다. 콜백이 options 보다 앞이다.
+  $form.openDialog("targetAlertAdd", null, function (result) {
     if (!result) return;              // x 로 닫았거나 배경을 탭한 경우 — 아무것도 추가하지 않는다
     var list = alerts();
     list.push(result);                // { name, price, side }
     $form.setVar("alerts", list);
     render();
-  });
+  }, { barrierDismissible: true });
 }
 
 function render() {
@@ -175,11 +199,12 @@ function render() {
   for (var i = 0; i < list.length; i++) {
     lsvAlert.add();
     lsvAlert.current = i;             // 이 뒤의 쓰기는 i 번째 행으로 간다
-    txtName.setText(list[i].name);
-    txtPrice.setText(thousands(list[i].price));
-    // 목표가 색이 매도/매수 구분이다. 매수 = 빨강, 매도 = 파랑.
-    txtPrice.setStyleProperty("Text", "style.color",
-      list[i].side === "buy" ? "#FF5B5B" : "#4D9BEE");
+
+    // 행은 컴포넌트다. 컴포넌트 안 위젯은 바깥에서 id 로 못 잡고,
+    // **노출 변수**로만 주고받는다. 포맷은 넘기기 전에 끝낸다.
+    cmpRow.setVar("name", list[i].name);
+    cmpRow.setVar("priceLabel", thousands(list[i].price));
+    cmpRow.setVar("side", list[i].side);
   }
 }
 
@@ -213,10 +238,10 @@ function submit(side) {
 
 스크립트는 문서 기준으로 맞지만 **위젯 id 와 속성 이름은 스튜디오 속성 패널에서 확인해야 한다.**
 
-- 위젯 id 를 위 스크립트와 같은 이름(`btnPlus` · `lsvAlert` · `txtName` · `txtPrice` · `emptyState` · `edtName` · `edtPrice` · `btnClose` · `btnSell` · `btnBuy`)으로 맞추면 그대로 붙는다.
-- 보임/숨김 속성이 `visible` 이 맞는지, 글자 색 경로가 `setStyleProperty("Text", "style.color", ...)` 가 맞는지는 패널에서 실제 이름을 본다.
+- 위젯 id 를 위 스크립트와 같은 이름(`btnPlus` · `lsvAlert` · `cmpRow` · `emptyState` · `edtName` · `edtPrice` · `btnClose` · `btnSell` · `btnBuy`)으로 맞추면 그대로 붙는다. `cmpRow` 는 리스트 안에 놓은 **행 컴포넌트 인스턴스**의 id 다.
+- 보임/숨김 속성 이름이 `visible` 이 맞는지 패널에서 본다.
+- **`lsvAlert.current = i` 를 준 뒤의 `cmpRow.setVar(...)` 가 그 행의 인스턴스로 가는지** 두 행을 넣어 확인한다. `current` 문서는 "이후의 프로퍼티 쓰기가 해당 행을 대상으로 한다"고만 적혀 있어 컴포넌트 변수까지 같은 범위인지는 직접 봐야 한다. 아니라면 행을 컴포넌트 대신 리스트 안에 직접 그리고(튜토리얼이 이 방식이다) 재사용은 다른 화면에서 가져다 쓰는 것으로 만족한다.
 - `+` 아이콘을 Button 이 아니라 이미지로 두면 `onClick` 대신 `onTap`.
-- 색을 스크립트로 바꾸는 대신 **행 컴포넌트에 매수/매도 두 변형(variant)** 을 두는 방법도 있다. 스타일 경로를 못 찾으면 이쪽이 확실하다.
 
 ---
 
