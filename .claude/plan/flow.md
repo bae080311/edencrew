@@ -26,7 +26,7 @@
 가장 손이 많이 가는 구간이다. 여기가 흔들리면 뒤가 전부 흔들린다. **이월 3건을 먼저 털고 시작한다** — 기준선 없이 코드를 쌓으면 나중에 경고가 어디서 왔는지 못 가린다.
 
 - [x] *(09-10 이월)* Flutter 설치 확인 → `flutter pub get` → `flutter analyze` 기준선 (3.47.3 · 무경고 · test 1개 통과)
-- [ ] *(09-10 이월)* `flutter run` 으로 화면이 뜨는지 확인 (**Chrome 아님** — iOS 시뮬레이터 또는 macOS). **09-12 현재 Xcode 미설치로 막혀 있다**(Command Line Tools 만 있음). 설치 후 `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`. 그때까지는 `layout_test.dart` 로 대신 확인한다.
+- [x] *(09-10 이월)* `flutter run` 으로 화면이 뜨는지 확인 — 09-12 Xcode 설치 후 `flutter run -d macos` 로 실행, 관심 화면에 실시간 시세가 들어오는 것까지 확인했다.
 - [x] *(09-10 이월)* `README.md` 를 본인 문서 골격으로 덮어쓰기 (섹션만 잡아두고 내용은 진행하며 채운다)
 - [x] **Figma 먼저 훑기** — 세 화면의 반복 요소(종목 행, 등락 텍스트, 빈 상태, 토스트)를 목록화. `Design Tokens — Dark` 프레임으로 토큰 확인. 폰트 크기는 텍스트 레이어에서 직접 읽어 메모.
 - [x] **mock 저장** — endpoint 4개를 `curl` 로 호출해 `app/assets/mock/` 에 저장. 파일명은 `ac_samsung.json`, `realtime_005930.json`, `meta_005930.json`, `sise_day_005930_p1.html` 형태. 삼성전자(005930) + 두 종목 정도.
@@ -37,7 +37,7 @@
 - [x] **앱 모델** — `Stock`(메타+시세), `Quote`(등락액·등락률·시가총액 계산), `DailyPrice`. 필드 복사뿐인 겹은 만들지 않고 그 판단을 `ARCHITECTURE.md` 변경 이력에 적는다.
 - [x] **`StockRepository`** 추상 + **`FakeStockRepository`**(mock 을 같은 파서로 읽음) + **`NaverStockRepository`**(HTTP + 페이지 캐시 + 메타 캐시).
 - [x] `main.dart` 에 `MultiProvider` + `--dart-define=USE_FAKE` 분기. **기본값은 실제 repository**다.
-- [ ] **실제 endpoint 4개 연결 확인** — `USE_FAKE` 없이 검색 · 실시간 시세 · 메타 · 일별 시세가 실제로 응답하는지. 여기까지 해야 Phase 1 이 끝난다.
+- [x] **실제 endpoint 4개 연결 확인** — `USE_FAKE` 없이 검색 · 실시간 시세 · 메타 · 일별 시세가 실제로 응답하는지. 여기까지 해야 Phase 1 이 끝난다.
 
 > 커밋: `docs: README 를 프로젝트 문서로 교체` / `feat: Naver 응답 DTO 추가` / `feat: 일별 시세 HTML 파서` / `test: 파서·포맷 유닛 테스트` / `feat: StockRepository 와 Fake 구현` / `chore: mock 응답 추가`
 
@@ -51,7 +51,7 @@
 - [x] **검색 화면** — 입력창 + 클리어, 검색어 하이라이트, 별 토글, 토스트 2종, 초기 빈 상태, 결과 없음 상태(검색어 삽입).
 - [x] **공통 컴포넌트 승격** — 관심 행과 검색 행이 겹치는 부분(등락 텍스트, 종목 행 레이아웃, 빈 상태, 스켈레톤)을 `ui/common/` 으로. **두 번째 사용처가 생긴 지금이 승격 시점이다.** — 종목 행 · 빈 상태 · 실패 안내 셋만 올렸다. 등락 텍스트 · 스켈레톤은 검색 화면에 시세가 없어 아직 사용처가 하나뿐이라 Phase 3 으로 미룬다.
 - [x] **상태 동기화 확인** — 검색에서 등록 → 관심 목록에 나타나는지, 별 아이콘이 두 화면에서 같이 바뀌는지.
-- [ ] 실제 endpoint 로 한 번 돌려 확인 (`USE_FAKE` 없이).
+- [x] 실제 endpoint 로 한 번 돌려 확인 (`USE_FAKE` 없이).
 
 > 커밋: `feat: FavoritesStore 로 관심 상태 관리` / `feat: 관심 화면 목록·새로고침` / `feat: 관심 화면 빈 상태와 정렬` / `feat: 하단 탭 바` / `feat: 검색 화면` / `feat: 관심 등록·해제 토스트` / `refactor: 종목 행·등락 텍스트를 ui/common 으로 승격`
 
