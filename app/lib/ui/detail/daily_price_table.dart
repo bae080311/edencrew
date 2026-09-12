@@ -4,6 +4,9 @@ import '../../theme/theme.dart';
 import '../common/price_tone_color.dart';
 import 'detail_ui_model.dart';
 
+/// 시안 `grid` 의 날짜 칸 폭. 한 위젯의 상자 크기라 토큰으로 올리지 않았다.
+const double _dateWidth = 46;
+
 /// `날짜 · 종가 · 등락 · 거래량` 네 컬럼의 일별 시세 표.
 ///
 /// 1년치 245행을 한 번에 만든다. 무한 스크롤(선택 항목)을 붙이게 되면 그때 `SliverList` 로 바꾼다.
@@ -11,9 +14,6 @@ class DailyPriceTable extends StatelessWidget {
   const DailyPriceTable({required this.rows, super.key});
 
   final List<DailyPriceRowUi> rows;
-
-  /// 시안 `grid` 의 날짜 칸 폭. 한 위젯의 상자 크기라 토큰으로 올리지 않았다.
-  static const double _dateWidth = 46;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +89,7 @@ class _Row extends StatelessWidget {
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: DailyPriceTable._dateWidth,
+            width: _dateWidth,
             child: _text(date, dateColor, TextAlign.left),
           ),
           SizedBox(width: dimens.space2),

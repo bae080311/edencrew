@@ -44,29 +44,40 @@ class DetailViewModel extends ChangeNotifier {
 
   bool get isFavorite => _favorites.contains(symbol);
 
-  String? get name => _stock?.name;
+  /// 값을 받지 못한 자리. 0 으로 채우면 실제 값처럼 보인다.
+  /// 무엇을 대신 보여줄지는 표시 결정이라 View 가 아니라 여기서 끝낸다.
+  static const String _missing = '-';
+
+  /// 메타를 받기 전에는 종목코드로 대신한다.
+  String get name => _stock?.name ?? symbol;
 
   /// `005930 · 코스피`
-  String? get marketLabel =>
-      _stock == null ? null : '${_stock!.symbol} · ${_stock!.exchangeName}';
+  String get marketLabel {
+    final Stock? stock = _stock;
+    return stock == null ? symbol : '${stock.symbol} · ${stock.exchangeName}';
+  }
 
-  String? get priceLabel =>
-      _quote == null ? null : fmt.thousands(_quote!.price);
+  String get priceLabel => _labelOf((Quote quote) => fmt.thousands(quote.price));
 
   /// 시안은 현재가 옆 등락을 `▼ 400 (-0.22%)` 로 쓴다 — 목록 행과 표기가 다르다.
-  String? get changeLabel =>
-      _quote == null ? null : fmt.arrowChangeLabel(_quote!.diff, _quote!.rate);
+  String get changeLabel =>
+      _labelOf((Quote quote) => fmt.arrowChangeLabel(quote.diff, quote.rate));
 
   PriceTone get tone => _quote?.tone ?? PriceTone.flat;
 
-  String? get openLabel => _quote == null ? null : fmt.thousands(_quote!.open);
-  String? get highLabel => _quote == null ? null : fmt.thousands(_quote!.high);
-  String? get lowLabel => _quote == null ? null : fmt.thousands(_quote!.low);
+  String get openLabel => _labelOf((Quote quote) => fmt.thousands(quote.open));
+  String get highLabel => _labelOf((Quote quote) => fmt.thousands(quote.high));
+  String get lowLabel => _labelOf((Quote quote) => fmt.thousands(quote.low));
 
   /// 요약 카드의 거래량 · 시가총액은 축약한다. (`29,113천` · `1,063조`)
-  String? get volumeLabel => _quote == null ? null : fmt.abbrev(_quote!.volume);
-  String? get marketCapLabel =>
-      _quote == null ? null : fmt.abbrev(_quote!.marketCap);
+  String get volumeLabel => _labelOf((Quote quote) => fmt.abbrev(quote.volume));
+  String get marketCapLabel =>
+      _labelOf((Quote quote) => fmt.abbrev(quote.marketCap));
+
+  String _labelOf(String Function(Quote quote) format) {
+    final Quote? quote = _quote;
+    return quote == null ? _missing : format(quote);
+  }
 
   /// 차트는 좌표를 직접 계산해야 해서 숫자 모델을 그대로 넘긴다.
   /// 최신 거래일이 먼저 오므로 그리는 쪽에서 뒤집어 쓴다.
