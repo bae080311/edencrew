@@ -46,10 +46,12 @@ class SearchViewModel extends ChangeNotifier {
   void onQueryChanged(String query) {
     _query = query;
     _debounceTimer?.cancel();
+    // 입력이 바뀐 순간 진행 중인 요청을 무효로 만든다. 디바운스가 끝날 때까지
+    // 미루면 그 사이 도착한 옛 응답이 새 입력 아래에 그대로 뜬다.
+    _requestId++;
 
     if (query.trim().isEmpty) {
       // 입력을 지우면 초기 상태로 돌아간다.
-      _requestId++;
       _results = const <Stock>[];
       _state = LoadState.initial;
       _errorMessage = null;

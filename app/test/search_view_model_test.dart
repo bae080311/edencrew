@@ -259,4 +259,41 @@ void main() {
       expect(viewModel.errorMessage, '검색에 실패했습니다');
     });
   });
+
+  group('입력이 바뀌는 동안 도착한 응답', () {
+    // 옛 응답이 "입력이 바뀐 뒤 ~ 다음 디바운스가 끝나기 전" 창에 도착하는 경우다.
+    // 이 창에서는 아직 새 요청이 나가지 않아 요청 번호가 그대로이므로,
+    // 입력이 바뀐 순간에 번호를 올리지 않으면 옛 결과가 그대로 화면에 붙는다.
+    test('디바운스가 끝나기 전에 도착한 옛 응답을 버린다', () async {
+      final repository = StubStockRepository(
+        byQuery: {
+          '삼성': [samsung],
+          '삼성전기': [samsungElec],
+        },
+        delays: {
+          '삼성': const Duration(milliseconds: 30),
+          '삼성전기': const Duration(milliseconds: 200),
+        },
+      );
+      final viewModel = viewModelWith(
+        repository,
+        debounce: const Duration(milliseconds: 50),
+      );
+
+      viewModel.onQueryChanged('삼성'); // 50ms 요청 → 80ms 응답
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      viewModel.onQueryChanged('삼성전기'); // 110ms 요청 → 310ms 응답
+
+      // 90ms — '삼성' 응답은 도착했고 '삼성전기' 요청은 아직 나가지도 않았다.
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(
+        viewModel.rows,
+        isEmpty,
+        reason: '옛 검색어의 결과가 새 입력 아래에 남았다',
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 240));
+      expect(viewModel.rows.single.name, '삼성전기');
+    });
+  });
 }
