@@ -8,6 +8,7 @@ import 'data/repository/fake_stock_repository.dart';
 import 'data/repository/naver_stock_repository.dart';
 import 'data/repository/stock_repository.dart';
 import 'state/favorites_store.dart';
+import 'ui/search/search_view_model.dart';
 import 'ui/watchlist/watchlist_view_model.dart';
 
 /// 개발용 목업 전환. **기본값은 실제 endpoint 조회**다.
@@ -26,6 +27,12 @@ void main() {
         ChangeNotifierProvider<FavoritesStore>(create: (_) => FavoritesStore()),
         ChangeNotifierProvider<WatchlistViewModel>(
           create: (BuildContext context) => WatchlistViewModel(
+            repository: context.read<StockRepository>(),
+            favorites: context.read<FavoritesStore>(),
+          ),
+        ),
+        ChangeNotifierProvider<SearchViewModel>(
+          create: (BuildContext context) => SearchViewModel(
             repository: context.read<StockRepository>(),
             favorites: context.read<FavoritesStore>(),
           ),
