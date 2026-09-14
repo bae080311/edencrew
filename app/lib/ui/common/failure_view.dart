@@ -30,7 +30,9 @@ class FailureView extends StatelessWidget {
             SizedBox(height: dimens.space3),
             TextButton(
               onPressed: onRetry,
-              style: TextButton.styleFrom(foregroundColor: colors.accentDefault),
+              style: TextButton.styleFrom(
+                foregroundColor: colors.accentDefault,
+              ),
               child: Text('다시 시도', style: AppTypography.label),
             ),
           ],

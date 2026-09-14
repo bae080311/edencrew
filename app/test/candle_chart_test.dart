@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:edencrew_assignment_starter/data/model/daily_price.dart';
 import 'package:edencrew_assignment_starter/theme/theme.dart';
 import 'package:edencrew_assignment_starter/ui/detail/candle_chart.dart';
@@ -26,6 +24,9 @@ const Size _canvas = Size(300, 200);
 
 /// painter 가 **실제로 그린 것**을 센다. `progress` 값만 보면 그리기에 쓰이지
 /// 않아도 통과한다 — 한 번 그렇게 놓쳤다.
+///
+/// 캔버스 호출을 직접 세어 판정한다. `Picture.approximateBytesUsed` 는 이름 그대로
+/// 근사치라 백엔드에 따라 0 이 나올 수 있어 비교 기준이 되지 못한다.
 int drawCallsAt(double progress) {
   // 색은 토큰에서 가져온다 — 테스트에도 hex 리터럴을 쓰지 않는다.
   const AppColors colors = AppColors.dark();
@@ -45,10 +46,25 @@ int drawCallsAt(double progress) {
     textScaler: TextScaler.noScaling,
   );
 
-  final ui.PictureRecorder recorder = ui.PictureRecorder();
-  painter.paint(Canvas(recorder), _canvas);
-  // 그려진 명령 수는 드러난 봉 수에 비례한다.
-  return recorder.endRecording().approximateBytesUsed;
+  final _CountingCanvas canvas = _CountingCanvas();
+  painter.paint(canvas, _canvas);
+  return canvas.calls;
+}
+
+/// 그리기 호출만 센다. 실제 렌더링은 필요 없다.
+class _CountingCanvas implements Canvas {
+  int calls = 0;
+
+  @override
+  void noSuchMethod(Invocation invocation) {
+    const Set<Symbol> drawing = <Symbol>{
+      #drawRect,
+      #drawLine,
+      #drawPath,
+      #drawCircle,
+    };
+    if (drawing.contains(invocation.memberName)) calls++;
+  }
 }
 
 Widget chartWith(List<DailyPrice> prices) => MaterialApp(

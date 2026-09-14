@@ -43,7 +43,9 @@ class WatchlistViewModel extends ChangeNotifier {
 
   /// 마지막으로 밀어서 해제한 종목과 그 자리. 실행 취소 한 번만 지원한다 —
   /// 여러 단계를 쌓으면 토스트가 어느 것을 되돌리는지 알 수 없다.
-  ({Stock stock, int index})? _undo;
+  /// 시세까지 함께 들고 있는다. 되돌릴 때 다시 조회하면 복원한 행이 스켈레톤으로
+  /// 한 번 깜빡였다가 채워진다 — 되돌리기는 즉시여야 한다.
+  ({Stock stock, int index, Quote? quote})? _undo;
 
   LoadState get state => _state;
 
@@ -133,16 +135,24 @@ class WatchlistViewModel extends ChangeNotifier {
     final int index = _favorites.indexOf(symbol);
     if (index < 0) return;
 
-    _undo = (stock: _favorites.stocks[index], index: index);
+    _undo = (
+      stock: _favorites.stocks[index],
+      index: index,
+      quote: _quotes[symbol],
+    );
     _favorites.remove(symbol);
   }
 
   /// 방금 해제한 종목을 원래 자리로 되돌린다. 되돌릴 것이 없으면 아무 일도 없다.
   void undoRemoveFavorite() {
-    final ({Stock stock, int index})? undo = _undo;
+    final ({Stock stock, int index, Quote? quote})? undo = _undo;
     if (undo == null) return;
 
     _undo = null;
+    // 시세를 먼저 돌려놓는다. `_onFavoritesChanged` 가 새 종목으로 보고
+    // 재조회를 걸기 전에 캐시가 채워져 있어야 깜빡이지 않는다.
+    final Quote? quote = undo.quote;
+    if (quote != null) _quotes[undo.stock.symbol] = quote;
     _favorites.insert(undo.index, undo.stock);
   }
 
@@ -154,20 +164,18 @@ class WatchlistViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 저장된 이름이 지금 enum 에 없으면(이름을 바꿨거나 값이 깨졌으면) 무시한다.
+  /// 저장된 이름이 지금 enum 에 없으면(이름을 바꿨거나 값이 깨졌으면) null 이다.
   WatchlistSort? _readSort() {
     final String? saved = _preferences?.readSort();
-    if (saved == null) return null;
-    for (final WatchlistSort sort in WatchlistSort.values) {
-      if (sort.name == saved) return sort;
-    }
-    return null;
+    return saved == null ? null : WatchlistSort.values.asNameMap()[saved];
   }
 
   /// 관심 종목을 한 번의 요청으로 조회한다.
   Future<void> _fetchQuotes() async {
     final List<String> requested = _favorites.symbols;
-    final Map<String, Quote> received = await _repository.fetchQuotes(requested);
+    final Map<String, Quote> received = await _repository.fetchQuotes(
+      requested,
+    );
 
     // 요청에 넣었는데 빠져 돌아온 종목은 받아둔 시세를 지운다. 그대로 두면 거래가
     // 멈춘 값이 최신인 것처럼 남는다 — 계약대로 그 행은 스켈레톤으로 돌아간다.

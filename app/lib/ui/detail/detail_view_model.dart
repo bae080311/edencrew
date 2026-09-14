@@ -41,6 +41,7 @@ class DetailViewModel extends ChangeNotifier {
   bool _isPeriodLoading = false;
 
   LoadState get state => _state;
+
   /// `failed` 일 때 화면에 그대로 나가는 문구. 기본값은 ViewModel 이 정한다.
   String get errorMessage => _errorMessage ?? '시세를 불러오지 못했습니다';
 
@@ -66,7 +67,8 @@ class DetailViewModel extends ChangeNotifier {
     return stock == null ? symbol : '${stock.symbol} · ${stock.exchangeName}';
   }
 
-  String get priceLabel => _labelOf((Quote quote) => fmt.thousands(quote.price));
+  String get priceLabel =>
+      _labelOf((Quote quote) => fmt.thousands(quote.price));
 
   /// 현재가를 숫자 그대로. View 가 값이 바뀌는 구간을 애니메이션으로 잇는 데 쓴다.
   /// 표시 문자열은 `priceLabel` 이고 이쪽은 보간용이다 — 시세를 못 받았으면 null.
@@ -136,7 +138,9 @@ class DetailViewModel extends ChangeNotifier {
   Future<void> changePeriod(ChartPeriod period) async {
     // 실패한 기간은 같은 탭을 다시 눌러 재시도할 수 있어야 한다. 같은 값이라고
     // 무조건 막으면 1년이 실패했을 때 다른 탭을 거쳐야만 복구된다.
-    if (_period == period && _periodError == null) return;
+    // 다만 재시도가 진행 중이면 막는다 — `_periodError` 는 성공해야 비므로
+    // 이걸 빼면 연달아 누를 때마다 같은 25페이지가 다시 나간다.
+    if (_period == period && (_periodError == null || _isPeriodLoading)) return;
 
     _period = period;
     _isPeriodLoading = true;

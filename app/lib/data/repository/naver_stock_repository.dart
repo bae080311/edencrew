@@ -21,9 +21,11 @@ import 'stock_repository.dart';
 ///
 /// 일별 시세 페이지와 종목 메타를 안에 캐시한다 — ViewModel 은 캐시를 모른다.
 class NaverStockRepository implements StockRepository {
-  NaverStockRepository({NaverApi? api, SiseDayParser parser = const SiseDayParser()})
-    : _api = api ?? NaverApi(),
-      _parser = parser;
+  NaverStockRepository({
+    NaverApi? api,
+    SiseDayParser parser = const SiseDayParser(),
+  }) : _api = api ?? NaverApi(),
+       _parser = parser;
 
   final NaverApi _api;
   final SiseDayParser _parser;
@@ -52,8 +54,9 @@ class NaverStockRepository implements StockRepository {
 
     final response = await _api.fetchRealtimeQuotes(symbols);
     return <String, Quote>{
-      for (final RealtimeQuoteDto dto
-          in RealtimeQuoteDto.listFromResponse(response))
+      for (final RealtimeQuoteDto dto in RealtimeQuoteDto.listFromResponse(
+        response,
+      ))
         dto.cd: dto.toQuote(),
     };
   }
@@ -130,5 +133,4 @@ class NaverStockRepository implements StockRepository {
     _lastPage[symbol] = parsed.lastPage;
     return parsed.items;
   }
-
 }

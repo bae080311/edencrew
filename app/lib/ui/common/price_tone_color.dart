@@ -9,4 +9,3 @@ Color priceToneText(AppColors colors, PriceTone tone) => switch (tone) {
   PriceTone.down => colors.priceDownText,
   PriceTone.flat => colors.priceFlatText,
 };
-

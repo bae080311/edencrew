@@ -253,8 +253,19 @@ class _SpinningRefreshState extends State<_SpinningRefresh>
   );
 
   @override
+  void initState() {
+    super.initState();
+    // 처음부터 갱신 중일 수 있다.
+    if (widget.isBusy) _controller.repeat();
+  }
+
+  @override
   void didUpdateWidget(_SpinningRefresh oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // **상태가 바뀐 순간에만** 반응한다. 매 리빌드마다 animateTo 를 부르면
+    // 갱신한 적이 없는데도 아이콘이 한 바퀴 돈다.
+    if (oldWidget.isBusy == widget.isBusy) return;
+
     if (widget.isBusy) {
       _controller.repeat();
     } else {

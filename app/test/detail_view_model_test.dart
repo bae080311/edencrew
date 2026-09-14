@@ -121,9 +121,9 @@ void main() {
 
     test('기간 전환만 실패하면 화면을 덮지 않고 periodError 로만 알린다', () async {
       final viewModel = viewModelWith(
-        StubStockRepository(failPeriods: const <ChartPeriod>{
-          ChartPeriod.threeMonths,
-        }),
+        StubStockRepository(
+          failPeriods: const <ChartPeriod>{ChartPeriod.threeMonths},
+        ),
       );
 
       await viewModel.load();
@@ -158,6 +158,34 @@ void main() {
         repository.requestedPeriods.length,
         greaterThan(before),
         reason: '같은 기간이라도 실패한 뒤에는 다시 요청해야 한다',
+      );
+    });
+
+    test('재시도가 진행 중이면 같은 탭을 또 눌러도 요청이 겹치지 않는다', () async {
+      final repository = StubStockRepository(
+        failPeriods: const <ChartPeriod>{ChartPeriod.oneYear},
+        delays: const <ChartPeriod, Duration>{
+          ChartPeriod.oneYear: Duration(milliseconds: 40),
+        },
+      );
+      final viewModel = viewModelWith(repository);
+
+      await viewModel.load();
+      await viewModel.changePeriod(ChartPeriod.oneYear);
+      final int before = repository.requestedPeriods.length;
+
+      // 연달아 세 번 누른다. 진행 중인 재시도가 있으므로 한 번만 나가야 한다.
+      final futures = <Future<void>>[
+        viewModel.changePeriod(ChartPeriod.oneYear),
+        viewModel.changePeriod(ChartPeriod.oneYear),
+        viewModel.changePeriod(ChartPeriod.oneYear),
+      ];
+      await Future.wait(futures);
+
+      expect(
+        repository.requestedPeriods.length - before,
+        1,
+        reason: '1년은 25페이지라 겹치면 요청이 두 배가 된다',
       );
     });
   });

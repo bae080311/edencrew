@@ -38,8 +38,8 @@ class SearchRow extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             onTap: onFavoriteTap,
             child: AppIcon(
-            row.isFavorite ? AppIcon.starFill : AppIcon.star,
-            size: context.dimens.iconFavorite,
+              row.isFavorite ? AppIcon.starFill : AppIcon.star,
+              size: context.dimens.iconFavorite,
               color: row.isFavorite
                   ? colors.favoriteActive
                   : colors.favoriteInactive,

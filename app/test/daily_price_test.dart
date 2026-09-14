@@ -27,10 +27,7 @@ void main() {
 
   group('candleTone — 몸통 방향', () {
     test('시가보다 종가가 높으면 양봉', () {
-      expect(
-        priceOf(diff: 0, open: 100, close: 110).candleTone,
-        PriceTone.up,
-      );
+      expect(priceOf(diff: 0, open: 100, close: 110).candleTone, PriceTone.up);
     });
 
     test('갭 상승 뒤 밀린 날은 전일비와 몸통이 갈린다', () {

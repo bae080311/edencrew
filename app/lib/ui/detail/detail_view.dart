@@ -8,7 +8,7 @@ import '../common/failure_view.dart';
 import '../common/load_state.dart';
 import 'candle_chart.dart';
 import 'current_price.dart';
-import 'daily_price_table.dart';
+import 'daily_price_row.dart';
 import 'detail_app_bar.dart';
 import 'detail_view_model.dart';
 import 'period_tabs.dart';

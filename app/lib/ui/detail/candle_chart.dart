@@ -5,18 +5,13 @@ import '../../data/model/daily_price.dart';
 import '../../theme/theme.dart';
 import 'candle_painter.dart';
 
-/// 일별 시세 차트. 캔들 · 거래량 바 · 축 라벨 · 기간 방향 영역을 한 캔버스에 그린다.
-///
-/// 크로스헤어는 [onFocusChanged] 로 위임한다 — 이 위젯은 그리기만 하고
-/// 무엇을 보여줄지는 상세 화면이 정한다.
+/// 일별 시세 차트. 캔들 · 거래량 바 · 축 라벨 · 기간 방향 영역 · 크로스헤어를
+/// 한 캔버스에 그린다. 짚은 자리의 날짜 · 종가도 캔버스 안에 띄운다.
 class CandleChart extends StatefulWidget {
-  const CandleChart({required this.prices, this.onFocusChanged, super.key});
+  const CandleChart({required this.prices, super.key});
 
   /// 최신 거래일이 먼저 온다. 왼쪽이 과거가 되도록 뒤에서부터 그린다.
   final List<DailyPrice> prices;
-
-  /// 손가락이 짚은 거래일. 떼면 null 이 간다.
-  final ValueChanged<DailyPrice?>? onFocusChanged;
 
   /// 시안 `Chart` 프레임 높이. 이 화면 밖에서 쓰지 않아 토큰으로 올리지 않았다.
   static const double _height = 200;
@@ -81,22 +76,22 @@ class _CandleChartState extends State<CandleChart>
         child: AnimatedBuilder(
           animation: _controller,
           builder: (BuildContext context, Widget? _) => CustomPaint(
-          painter: CandlePainter(
-            prices: widget.prices,
-            focusIndex: _focusIndex,
-            progress: _curve.value,
-            up: colors.chartLineUp,
-            down: colors.chartLineDown,
-            flat: colors.chartLineFlat,
-            wick: colors.chartBaseline,
-            areaUp: colors.chartAreaUp,
-            areaDown: colors.chartAreaDown,
-            axisLabel: colors.chartAxisLabel,
-            volumeBar: colors.chartVolumeBar,
-            labelStyle: AppTypography.caption.copyWith(
-              color: colors.chartAxisLabel,
-            ),
-            textScaler: MediaQuery.textScalerOf(context),
+            painter: CandlePainter(
+              prices: widget.prices,
+              focusIndex: _focusIndex,
+              progress: _curve.value,
+              up: colors.chartLineUp,
+              down: colors.chartLineDown,
+              flat: colors.chartLineFlat,
+              wick: colors.chartBaseline,
+              areaUp: colors.chartAreaUp,
+              areaDown: colors.chartAreaDown,
+              axisLabel: colors.chartAxisLabel,
+              volumeBar: colors.chartVolumeBar,
+              labelStyle: AppTypography.caption.copyWith(
+                color: colors.chartAxisLabel,
+              ),
+              textScaler: MediaQuery.textScalerOf(context),
             ),
           ),
         ),
@@ -118,12 +113,10 @@ class _CandleChartState extends State<CandleChart>
     setState(() => _focusIndex = slot);
     // 봉이 바뀔 때마다 한 번. 손가락이 어디를 짚었는지 화면을 안 봐도 안다.
     HapticFeedback.selectionClick();
-    widget.onFocusChanged?.call(widget.prices[count - 1 - slot]);
   }
 
   void _clear() {
     if (_focusIndex == null) return;
     setState(() => _focusIndex = null);
-    widget.onFocusChanged?.call(null);
   }
 }

@@ -90,26 +90,29 @@ class _SearchViewState extends State<SearchView> {
       );
     }
 
-    // 시안의 초기 상태(`02 · 검색_empty`)는 필수라 최근 검색어가 있어도 덮지
-    // 않는다. 최근 검색어는 선택 항목이므로 그 아래에 덧붙인다.
+    const Widget initial = EmptyState(
+      icon: AppIcon.search,
+      title: '종목을 검색해 보세요',
+      description: '종목명 또는 종목코드 6자리로\n검색하실 수 있습니다.',
+    );
+
+    // 최근 검색어가 없으면 시안(`02 · 검색_empty`) 그대로 둔다. 스크롤 뷰로 감싸면
+    // 높이가 무한이 되어 `EmptyState` 의 세로 가운데 정렬이 풀리고 위로 붙는다.
+    if (viewModel.recentQueries.isEmpty) return initial;
+
+    // 최근 검색어는 선택 항목이라 시안 화면을 덮지 않고 그 아래에 덧붙인다.
     return SingleChildScrollView(
       child: Column(
         children: <Widget>[
-          const EmptyState(
-            icon: AppIcon.search,
-            title: '종목을 검색해 보세요',
-            description: '종목명 또는 종목코드 6자리로\n검색하실 수 있습니다.',
+          initial,
+          SizedBox(height: context.dimens.space4),
+          RecentQueries(
+            queries: viewModel.recentQueries,
+            onSelected: _applyQuery,
+            onRemoved: viewModel.removeRecentQuery,
+            onCleared: viewModel.clearRecentQueries,
           ),
-          if (viewModel.recentQueries.isNotEmpty) ...<Widget>[
-            SizedBox(height: context.dimens.space4),
-            RecentQueries(
-              queries: viewModel.recentQueries,
-              onSelected: _applyQuery,
-              onRemoved: viewModel.removeRecentQuery,
-              onCleared: viewModel.clearRecentQueries,
-            ),
-            SizedBox(height: context.dimens.space4),
-          ],
+          SizedBox(height: context.dimens.space4),
         ],
       ),
     );

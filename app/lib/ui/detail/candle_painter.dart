@@ -52,9 +52,12 @@ class CandlePainter extends CustomPainter {
   /// 맨 위 · 맨 아래 캔들의 심지가 잘리지 않을 만큼만 띄운다.
   static const double _inset = 4;
 
-  /// 세로 배분 — 가격 : 거래량 : 날짜 라벨. 합이 1 이다.
-  static const double _priceRatio = 0.66;
-  static const double _volumeRatio = 0.2;
+  /// 날짜 라벨 칸을 뺀 나머지를 가격과 거래량이 나눠 갖는 비율.
+  static const double _priceRatio = 0.74;
+  static const double _volumeRatio = 0.21;
+
+  /// 거래량 바와 날짜 라벨 사이.
+  static const double _labelGap = 4;
 
   /// 동시에 차오르는 봉 개수. 1 이면 딱딱 끊기고, 너무 크면 전체가 한꺼번에 뜬다.
   static const double _wave = 8;
@@ -63,9 +66,13 @@ class CandlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (prices.isEmpty) return;
 
-    final double priceBottom = size.height * _priceRatio;
-    final double volumeTop = priceBottom + size.height * 0.04;
-    final double volumeBottom = volumeTop + size.height * _volumeRatio;
+    // 날짜 라벨 칸을 먼저 떼어 둔다. 비율로만 나누면 글자 배율 1.3 에서
+    // 라벨이 고정 높이(200) 밖으로 나가 아래 요약 카드 위에 겹쳐 그려진다.
+    final double dateBand = _labelHeight + _labelGap;
+    final double plot = math.max(size.height - dateBand, 1);
+    final double priceBottom = plot * _priceRatio;
+    final double volumeTop = priceBottom + plot * 0.05;
+    final double volumeBottom = math.min(volumeTop + plot * _volumeRatio, plot);
 
     int lowest = prices.first.low;
     int highest = prices.first.high;
@@ -112,7 +119,15 @@ class CandlePainter extends CustomPainter {
       growOf,
     );
     _paintCandles(canvas, oldestFirst, slot, bodyWidth, y, priceBottom, growOf);
-    _paintAxisLabels(canvas, size, oldestFirst, highest, lowest, volumeBottom);
+    _paintAxisLabels(
+      canvas,
+      size,
+      oldestFirst,
+      highest,
+      lowest,
+      priceBottom,
+      volumeBottom,
+    );
     _paintFocus(canvas, size, oldestFirst, slot, y, volumeBottom);
   }
 
@@ -234,18 +249,23 @@ class CandlePainter extends CustomPainter {
     List<DailyPrice> oldestFirst,
     int highest,
     int lowest,
+    double priceBottom,
     double volumeBottom,
   ) {
-    _label(canvas, thousands(highest), size.width, 0, alignRight: true);
+    // 크로스헤어 라벨도 오른쪽 위에 붙으므로 짚는 동안에는 최고가를 비운다.
+    // 둘이 같은 자리에 겹쳐 그려지면 어느 쪽도 읽을 수 없다.
+    if (focusIndex == null) {
+      _label(canvas, thousands(highest), size.width, 0, alignRight: true);
+    }
     _label(
       canvas,
       thousands(lowest),
       size.width,
-      size.height * _priceRatio - _labelHeight,
+      priceBottom - _labelHeight,
       alignRight: true,
     );
 
-    final double dateTop = volumeBottom + 4;
+    final double dateTop = volumeBottom + _labelGap;
     _label(canvas, monthDay(oldestFirst.first.date), 0, dateTop);
     _label(
       canvas,
