@@ -7,7 +7,8 @@ import '../common/empty_state.dart';
 import '../common/failure_view.dart';
 import '../common/load_state.dart';
 import '../detail/detail_view.dart';
-import 'favorite_toast.dart';
+import '../common/favorite_toast.dart';
+import 'recent_queries.dart';
 import 'search_row.dart';
 import 'search_ui_model.dart';
 import 'search_view_model.dart';
@@ -51,7 +52,7 @@ class _SearchViewState extends State<SearchView> {
   Widget _body(SearchViewModel viewModel) {
     if (viewModel.state == LoadState.failed) {
       return FailureView(
-        message: viewModel.errorMessage ?? '검색에 실패했습니다',
+        message: viewModel.errorMessage,
         // 같은 검색어를 다시 흘려보내면 디바운스를 거쳐 재조회된다.
         onRetry: () => viewModel.onQueryChanged(viewModel.query),
       );
@@ -65,7 +66,11 @@ class _SearchViewState extends State<SearchView> {
         itemCount: rows.length,
         itemBuilder: (BuildContext context, int index) => SearchRow(
           row: rows[index],
-          onTap: () => openStockDetail(context, rows[index].symbol),
+          onTap: () {
+            // 결과를 눌렀다는 건 그 검색어가 찾던 것을 찾아줬다는 뜻이다.
+            viewModel.recordQuery();
+            openStockDetail(context, rows[index].symbol);
+          },
           onFavoriteTap: () => _toggleFavorite(viewModel, rows[index].symbol),
         ),
       );
@@ -85,11 +90,31 @@ class _SearchViewState extends State<SearchView> {
       );
     }
 
+    if (viewModel.recentQueries.isNotEmpty) {
+      return SingleChildScrollView(
+        padding: EdgeInsets.symmetric(vertical: context.dimens.space4),
+        child: RecentQueries(
+          queries: viewModel.recentQueries,
+          onSelected: _applyQuery,
+          onRemoved: viewModel.removeRecentQuery,
+          onCleared: viewModel.clearRecentQueries,
+        ),
+      );
+    }
+
     return const EmptyState(
       icon: AppIcon.search,
       title: '종목을 검색해 보세요',
       description: '종목명 또는 종목코드 6자리로\n검색하실 수 있습니다.',
     );
+  }
+
+  /// 최근 검색어를 누르면 입력창에도 같은 값을 채워 넣는다 — 입력창과 결과가
+  /// 어긋나면 지우기 버튼이 무엇을 지우는지 알 수 없다.
+  void _applyQuery(String query) {
+    _controller.text = query;
+    _controller.selection = TextSelection.collapsed(offset: query.length);
+    context.read<SearchViewModel>().onQueryChanged(query);
   }
 
   void _toggleFavorite(SearchViewModel viewModel, String symbol) {
@@ -158,13 +183,17 @@ class _SearchField extends StatelessWidget {
             ),
             SizedBox(width: dimens.space2),
             // 시안은 입력 전에도 이 버튼을 보여준다. 조건부로 감추지 않는다.
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onClear,
-              child: AppIcon(
-                AppIcon.x,
-                size: dimens.iconSm,
-                color: colors.textTertiary,
+            Semantics(
+              button: true,
+              label: '검색어 지우기',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onClear,
+                child: AppIcon(
+                  AppIcon.x,
+                  size: dimens.iconSm,
+                  color: colors.textTertiary,
+                ),
               ),
             ),
           ],

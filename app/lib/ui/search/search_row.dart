@@ -30,15 +30,20 @@ class SearchRow extends StatelessWidget {
         marketLabel: row.marketLabel,
         highlightStart: row.highlightStart,
         highlightEnd: row.highlightEnd,
-        trailing: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onFavoriteTap,
-          child: AppIcon(
+        // 아이콘뿐이라 스크린리더에 읽힐 이름이 없다. 상태에 따라 할 일을 알린다.
+        trailing: Semantics(
+          button: true,
+          label: row.isFavorite ? '관심 해제' : '관심 등록',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onFavoriteTap,
+            child: AppIcon(
             row.isFavorite ? AppIcon.starFill : AppIcon.star,
             size: context.dimens.iconFavorite,
-            color: row.isFavorite
-                ? colors.favoriteActive
-                : colors.favoriteInactive,
+              color: row.isFavorite
+                  ? colors.favoriteActive
+                  : colors.favoriteInactive,
+            ),
           ),
         ),
       ),
