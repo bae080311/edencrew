@@ -66,7 +66,9 @@ class _TabBar extends StatelessWidget {
           child: Row(
             children: <Widget>[
               _Tab(
-                icon: AppIcon.starFill,
+                // 시안의 관심 탭은 활성일 때만 채운 별이고 비활성은 빈 별이다.
+                // 검색 탭은 돋보기 하나라 색만 바뀐다.
+                icon: index == 0 ? AppIcon.starFill : AppIcon.star,
                 label: '관심',
                 isActive: index == 0,
                 onTap: () => onChanged(0),
