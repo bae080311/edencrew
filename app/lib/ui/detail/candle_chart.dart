@@ -93,6 +93,10 @@ class _CandleChartState extends State<CandleChart>
             areaDown: colors.chartAreaDown,
             axisLabel: colors.chartAxisLabel,
             volumeBar: colors.chartVolumeBar,
+            labelStyle: AppTypography.caption.copyWith(
+              color: colors.chartAxisLabel,
+            ),
+            textScaler: MediaQuery.textScalerOf(context),
             ),
           ),
         ),

@@ -139,6 +139,27 @@ void main() {
       await viewModel.changePeriod(ChartPeriod.sixMonths);
       expect(viewModel.periodError, isNull);
     });
+
+    test('실패한 기간은 같은 탭을 다시 눌러 재시도할 수 있다', () async {
+      final repository = StubStockRepository(
+        failPeriods: const <ChartPeriod>{ChartPeriod.oneYear},
+      );
+      final viewModel = viewModelWith(repository);
+
+      await viewModel.load();
+      await viewModel.changePeriod(ChartPeriod.oneYear);
+      expect(viewModel.periodError, isNotNull);
+
+      final int before = repository.requestedPeriods.length;
+      // 다른 탭을 거치지 않고 같은 탭을 다시 누른다.
+      await viewModel.changePeriod(ChartPeriod.oneYear);
+
+      expect(
+        repository.requestedPeriods.length,
+        greaterThan(before),
+        reason: '같은 기간이라도 실패한 뒤에는 다시 요청해야 한다',
+      );
+    });
   });
 
   group('현재가와 등락', () {

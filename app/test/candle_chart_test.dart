@@ -41,6 +41,8 @@ int drawCallsAt(double progress) {
     areaDown: colors.chartAreaDown,
     axisLabel: colors.chartAxisLabel,
     volumeBar: colors.chartVolumeBar,
+    labelStyle: AppTypography.caption.copyWith(color: colors.chartAxisLabel),
+    textScaler: TextScaler.noScaling,
   );
 
   final ui.PictureRecorder recorder = ui.PictureRecorder();

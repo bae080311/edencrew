@@ -41,6 +41,11 @@ class SearchViewModel extends ChangeNotifier {
   int _requestId = 0;
 
   String _query = '';
+
+  /// **지금 화면에 떠 있는 결과를 만든 검색어.** `_query` 와 다를 수 있다 —
+  /// 입력이 바뀌어도 받아둔 결과는 다음 응답이 올 때까지 그대로 남기 때문이다.
+  /// 하이라이트와 최근 검색어 기록은 화면에 보이는 것과 맞아야 하므로 이쪽을 쓴다.
+  String _resultsQuery = '';
   LoadState _state = LoadState.initial;
   String? _errorMessage;
   List<Stock> _results = const <Stock>[];
@@ -53,16 +58,19 @@ class SearchViewModel extends ChangeNotifier {
   /// `삼` · `삼성` 처럼 지나가는 입력이 목록을 채운다. 결과를 눌렀다는 것은
   /// 그 검색어가 원하던 것을 찾아줬다는 뜻이다.
   void recordQuery() {
-    final String query = _query.trim();
-    if (query.isEmpty) return;
+    // 누른 행을 만든 검색어를 남긴다. `_query` 를 쓰면 `삼성` 결과가 떠 있는 동안
+    // `카카오` 를 입력하고 그 행을 누를 때 `카카오` 가 성공한 검색어로 남는다.
+    final String query = _resultsQuery.trim();
+    // 결과가 없는 검색어는 남기지 않는다. 다시 눌러도 빈 화면만 나온다.
+    if (query.isEmpty || _results.isEmpty) return;
 
     final List<String> next = <String>[
       query,
       ..._recentQueries.where((String saved) => saved != query),
     ];
-    _recentQueries = next.take(Preferences.recentQueryLimit).toList(
-      growable: false,
-    );
+    _recentQueries = next
+        .take(Preferences.recentQueryLimit)
+        .toList(growable: false);
     _preferences?.writeRecentQueries(_recentQueries);
     notifyListeners();
   }
@@ -81,7 +89,9 @@ class SearchViewModel extends ChangeNotifier {
     _preferences?.writeRecentQueries(_recentQueries);
     notifyListeners();
   }
+
   LoadState get state => _state;
+
   /// `failed` 일 때 화면에 그대로 나가는 문구. 기본값은 ViewModel 이 정한다.
   String get errorMessage => _errorMessage ?? '검색에 실패했습니다';
 
@@ -96,8 +106,7 @@ class SearchViewModel extends ChangeNotifier {
   }
 
   /// 결과 없음은 `ready && rows.isEmpty` 로 파생시킨다.
-  List<SearchRowUi> get rows =>
-      _results.map(_toRow).toList(growable: false);
+  List<SearchRowUi> get rows => _results.map(_toRow).toList(growable: false);
 
   /// 한 글자마다 요청하지 않는다. 마지막 입력만 살아 남는다.
   void onQueryChanged(String query) {
@@ -110,6 +119,7 @@ class SearchViewModel extends ChangeNotifier {
     if (query.trim().isEmpty) {
       // 입력을 지우면 초기 상태로 돌아간다.
       _results = const <Stock>[];
+      _resultsQuery = '';
       _state = LoadState.initial;
       _errorMessage = null;
       notifyListeners();
@@ -141,11 +151,13 @@ class SearchViewModel extends ChangeNotifier {
       final List<Stock> results = await _repository.searchStocks(query);
       if (requestId != _requestId) return; // 지난 요청의 응답은 버린다
       _results = results;
+      _resultsQuery = query;
       _state = LoadState.ready;
     } on Object catch (error) {
       if (requestId != _requestId) return;
       logSwallowed('검색', error);
       _results = const <Stock>[];
+      _resultsQuery = '';
       _state = LoadState.failed;
       _errorMessage = '검색에 실패했습니다';
     }
@@ -153,7 +165,8 @@ class SearchViewModel extends ChangeNotifier {
   }
 
   SearchRowUi _toRow(Stock stock) {
-    final String keyword = _query.trim();
+    // 강조도 화면에 보이는 결과를 만든 검색어로 건다.
+    final String keyword = _resultsQuery.trim();
     final int start = keyword.isEmpty
         ? -1
         : stock.name.toLowerCase().indexOf(keyword.toLowerCase());

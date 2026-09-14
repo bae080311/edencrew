@@ -21,6 +21,8 @@ class CandlePainter extends CustomPainter {
     required this.areaDown,
     required this.axisLabel,
     required this.volumeBar,
+    required this.labelStyle,
+    required this.textScaler,
   });
 
   final List<DailyPrice> prices;
@@ -37,6 +39,11 @@ class CandlePainter extends CustomPainter {
   final Color axisLabel;
   final Color volumeBar;
 
+  /// 축 라벨 서체. `TextPainter` 는 위젯 트리 밖이라 앱 폰트도 배율도 상속하지
+  /// 못한다 — 토큰에서 만든 스타일과 지금 배율을 받아서 쓴다.
+  final TextStyle labelStyle;
+  final TextScaler textScaler;
+
   /// 캔들 사이 간격은 시안 값(1.2). 심지 굵기는 시안이 0.3 이지만 1년치 245개를
   /// 그리면 사라져서 최소 굵기를 따로 잡았다.
   static const double _gap = 1.2;
@@ -48,8 +55,6 @@ class CandlePainter extends CustomPainter {
   /// 세로 배분 — 가격 : 거래량 : 날짜 라벨. 합이 1 이다.
   static const double _priceRatio = 0.66;
   static const double _volumeRatio = 0.2;
-
-  static const double _labelSize = 10;
 
   /// 동시에 차오르는 봉 개수. 1 이면 딱딱 끊기고, 너무 크면 전체가 한꺼번에 뜬다.
   static const double _wave = 8;
@@ -106,15 +111,7 @@ class CandlePainter extends CustomPainter {
       volumeBottom,
       growOf,
     );
-    _paintCandles(
-      canvas,
-      oldestFirst,
-      slot,
-      bodyWidth,
-      y,
-      priceBottom,
-      growOf,
-    );
+    _paintCandles(canvas, oldestFirst, slot, bodyWidth, y, priceBottom, growOf);
     _paintAxisLabels(canvas, size, oldestFirst, highest, lowest, volumeBottom);
     _paintFocus(canvas, size, oldestFirst, slot, y, volumeBottom);
   }
@@ -244,7 +241,7 @@ class CandlePainter extends CustomPainter {
       canvas,
       thousands(lowest),
       size.width,
-      size.height * _priceRatio - _labelSize * 1.4,
+      size.height * _priceRatio - _labelHeight,
       alignRight: true,
     );
 
@@ -300,6 +297,10 @@ class CandlePainter extends CustomPainter {
     );
   }
 
+  /// 최저가 라벨을 가격 영역 바닥에 붙이려면 글자 높이를 알아야 한다.
+  double get _labelHeight =>
+      textScaler.scale(labelStyle.fontSize ?? 11) * (labelStyle.height ?? 1.3);
+
   void _label(
     Canvas canvas,
     String text,
@@ -308,11 +309,9 @@ class CandlePainter extends CustomPainter {
     bool alignRight = false,
   }) {
     final TextPainter painter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(color: axisLabel, fontSize: _labelSize),
-      ),
+      text: TextSpan(text: text, style: labelStyle),
       textDirection: TextDirection.ltr,
+      textScaler: textScaler,
     )..layout();
     painter.paint(canvas, Offset(alignRight ? x - painter.width : x, y));
   }
@@ -335,5 +334,7 @@ class CandlePainter extends CustomPainter {
       oldDelegate.areaUp != areaUp ||
       oldDelegate.areaDown != areaDown ||
       oldDelegate.axisLabel != axisLabel ||
-      oldDelegate.volumeBar != volumeBar;
+      oldDelegate.volumeBar != volumeBar ||
+      oldDelegate.labelStyle != labelStyle ||
+      oldDelegate.textScaler != textScaler;
 }

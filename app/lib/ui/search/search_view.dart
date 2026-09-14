@@ -90,22 +90,28 @@ class _SearchViewState extends State<SearchView> {
       );
     }
 
-    if (viewModel.recentQueries.isNotEmpty) {
-      return SingleChildScrollView(
-        padding: EdgeInsets.symmetric(vertical: context.dimens.space4),
-        child: RecentQueries(
-          queries: viewModel.recentQueries,
-          onSelected: _applyQuery,
-          onRemoved: viewModel.removeRecentQuery,
-          onCleared: viewModel.clearRecentQueries,
-        ),
-      );
-    }
-
-    return const EmptyState(
-      icon: AppIcon.search,
-      title: '종목을 검색해 보세요',
-      description: '종목명 또는 종목코드 6자리로\n검색하실 수 있습니다.',
+    // 시안의 초기 상태(`02 · 검색_empty`)는 필수라 최근 검색어가 있어도 덮지
+    // 않는다. 최근 검색어는 선택 항목이므로 그 아래에 덧붙인다.
+    return SingleChildScrollView(
+      child: Column(
+        children: <Widget>[
+          const EmptyState(
+            icon: AppIcon.search,
+            title: '종목을 검색해 보세요',
+            description: '종목명 또는 종목코드 6자리로\n검색하실 수 있습니다.',
+          ),
+          if (viewModel.recentQueries.isNotEmpty) ...<Widget>[
+            SizedBox(height: context.dimens.space4),
+            RecentQueries(
+              queries: viewModel.recentQueries,
+              onSelected: _applyQuery,
+              onRemoved: viewModel.removeRecentQuery,
+              onCleared: viewModel.clearRecentQueries,
+            ),
+            SizedBox(height: context.dimens.space4),
+          ],
+        ],
+      ),
     );
   }
 

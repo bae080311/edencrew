@@ -96,8 +96,13 @@ class DetailViewModel extends ChangeNotifier {
   /// 최신 거래일이 먼저 오므로 그리는 쪽에서 뒤집어 쓴다.
   List<DailyPrice> get chartPrices => _prices;
 
+  /// `SliverList.builder` 가 행마다 이 getter 를 부른다. 매번 245행을 새로
+  /// 만들면 보이는 행 수만큼 곱해져 sliver 로 아낀 것을 되돌린다.
+  /// 구간이 바뀔 때만 새로 만든다.
   List<DailyPriceRowUi> get dailyRows =>
-      _prices.map(_toDailyRow).toList(growable: false);
+      _dailyRows ??= _prices.map(_toDailyRow).toList(growable: false);
+
+  List<DailyPriceRowUi>? _dailyRows;
 
   Future<void> load() async {
     _state = LoadState.loading;
@@ -115,6 +120,7 @@ class DetailViewModel extends ChangeNotifier {
       _stock = results[0] as Stock;
       _quote = (results[1] as Map<String, Quote>)[symbol];
       _prices = results[2] as List<DailyPrice>;
+      _dailyRows = null;
       _state = LoadState.ready;
       _periodError = null;
     } on Object catch (error) {
@@ -128,7 +134,9 @@ class DetailViewModel extends ChangeNotifier {
   /// 기간 탭 전환은 **latest-wins** 다. 하나의 플래그로 전부 막으면
   /// `1개월 → 3개월` 을 빠르게 눌렀을 때 나중 의도가 무시된다.
   Future<void> changePeriod(ChartPeriod period) async {
-    if (_period == period) return;
+    // 실패한 기간은 같은 탭을 다시 눌러 재시도할 수 있어야 한다. 같은 값이라고
+    // 무조건 막으면 1년이 실패했을 때 다른 탭을 거쳐야만 복구된다.
+    if (_period == period && _periodError == null) return;
 
     _period = period;
     _isPeriodLoading = true;
@@ -141,6 +149,7 @@ class DetailViewModel extends ChangeNotifier {
       );
       if (period != _period) return; // 지난 탭의 응답은 버린다
       _prices = prices;
+      _dailyRows = null;
       _periodError = null;
     } on Object catch (error) {
       if (period != _period) return;

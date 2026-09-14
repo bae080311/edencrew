@@ -313,4 +313,40 @@ void main() {
       expect(viewModel.rows.single.name, '삼성전기');
     });
   });
+
+  group('최근 검색어', () {
+    test('누른 행을 만든 검색어를 남긴다 — 입력 중인 검색어가 아니다', () async {
+      final repository = StubStockRepository(
+        byQuery: <String, List<Stock>>{
+          '삼성': <Stock>[samsung],
+          '카카오': <Stock>[],
+        },
+      );
+      final viewModel = viewModelWith(repository);
+
+      viewModel.onQueryChanged('삼성');
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      expect(viewModel.rows.single.name, '삼성전자');
+
+      // 입력만 바꾸고 새 응답이 오기 전에 떠 있는 삼성 행을 누른다.
+      viewModel.onQueryChanged('카카오');
+      viewModel.recordQuery();
+
+      expect(
+        viewModel.recentQueries,
+        <String>['삼성'],
+        reason: '화면에 떠 있던 결과를 만든 검색어가 남아야 한다',
+      );
+    });
+
+    test('결과가 없으면 남기지 않는다', () async {
+      final viewModel = viewModelWith(StubStockRepository());
+
+      viewModel.onQueryChanged('없는종목');
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      viewModel.recordQuery();
+
+      expect(viewModel.recentQueries, isEmpty);
+    });
+  });
 }
