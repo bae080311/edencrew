@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../data/model/stock.dart';
+import 'preferences.dart';
 
 /// 관심 종목의 **단일 원천**. 세 화면이 같은 객체를 본다.
 ///
@@ -11,6 +12,13 @@ import '../data/model/stock.dart';
 /// 하는데, 등록하는 화면(검색 · 상세)이 이미 그 값을 갖고 있다. symbol 만 담으면
 /// 목록을 그릴 때마다 종목 수만큼 메타를 다시 조회해야 한다.
 class FavoritesStore extends ChangeNotifier {
+  /// [preferences] 를 주면 앱을 껐다 켜도 목록이 남는다. 저장 방식은 여기서만
+  /// 다루고 화면은 모른다(`ARCHITECTURE.md` 영속성 절). 테스트는 주지 않는다.
+  FavoritesStore({Preferences? preferences}) : _preferences = preferences {
+    _stocks.addAll(preferences?.readFavorites() ?? const <Stock>[]);
+  }
+
+  final Preferences? _preferences;
   final List<Stock> _stocks = <Stock>[];
 
   /// 등록한 순서를 유지한다. 화면에 보이는 순서는 ViewModel 이 정렬한다.
@@ -34,6 +42,7 @@ class FavoritesStore extends ChangeNotifier {
     final bool added = _stocks.length == before;
     if (added) _stocks.add(stock);
 
+    _save();
     notifyListeners();
     return added;
   }
@@ -42,6 +51,24 @@ class FavoritesStore extends ChangeNotifier {
   void remove(String symbol) {
     final int before = _stocks.length;
     _stocks.removeWhere((Stock saved) => saved.symbol == symbol);
-    if (_stocks.length != before) notifyListeners();
+    if (_stocks.length == before) return;
+
+    _save();
+    notifyListeners();
   }
+
+  /// 해제한 종목을 **원래 자리로** 되돌린다. 실행 취소용이다.
+  /// 맨 뒤에 붙이면 등록 순서가 바뀌어 `가나다순` 이 아닌 정렬에서 자리가 달라진다.
+  void insert(int index, Stock stock) {
+    if (contains(stock.symbol)) return;
+    _stocks.insert(index.clamp(0, _stocks.length), stock);
+    _save();
+    notifyListeners();
+  }
+
+  /// 해제 전 위치. 실행 취소가 원래 자리를 알아야 한다.
+  int indexOf(String symbol) =>
+      _stocks.indexWhere((Stock saved) => saved.symbol == symbol);
+
+  void _save() => _preferences?.writeFavorites(_stocks);
 }

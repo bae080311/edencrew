@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../theme/theme.dart';
 import '../common/app_icon.dart';
+import '../common/favorite_toast.dart';
 import '../common/empty_state.dart';
 import '../common/failure_view.dart';
 import '../common/load_state.dart';
@@ -66,7 +68,7 @@ class _WatchlistViewState extends State<WatchlistView> {
 
     if (viewModel.state == LoadState.failed) {
       return FailureView(
-        message: viewModel.errorMessage ?? '시세를 불러오지 못했습니다',
+        message: viewModel.errorMessage,
         onRetry: viewModel.load,
       );
     }
@@ -82,11 +84,52 @@ class _WatchlistViewState extends State<WatchlistView> {
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: rows.length,
-        itemBuilder: (BuildContext context, int index) => WatchlistRow(
-          row: rows[index],
-          onTap: () => openStockDetail(context, rows[index].symbol),
+        itemBuilder: (BuildContext context, int index) =>
+            _dismissible(context, rows[index]),
+      ),
+    );
+  }
+
+  /// 왼쪽으로 밀어 관심 해제. 시안에 없는 동작이라 배경은 해제 상태 색
+  /// (`favoriteInactive`)으로만 알린다. 확인 다이얼로그 대신 **실행 취소**를 붙였다 —
+  /// 미는 동작은 실수하기 쉬운데 매번 확인을 받으면 제대로 민 경우가 번거로워진다.
+  Widget _dismissible(BuildContext context, WatchlistRowUi row) {
+    final AppDimens dimens = context.dimens;
+
+    return Dismissible(
+      key: ValueKey<String>(row.symbol),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => _removeFavorite(row.symbol),
+      background: ColoredBox(
+        color: context.colors.surfaceSunken,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: dimens.space4),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: AppIcon(
+              AppIcon.star,
+              size: dimens.iconMd,
+              color: context.colors.favoriteInactive,
+            ),
+          ),
         ),
       ),
+      child: WatchlistRow(
+        row: row,
+        onTap: () => openStockDetail(context, row.symbol),
+      ),
+    );
+  }
+
+  void _removeFavorite(String symbol) {
+    final WatchlistViewModel viewModel = context.read<WatchlistViewModel>();
+    viewModel.removeFavorite(symbol);
+    // 행이 사라지는 순간을 손으로도 알린다. 스와이프는 화면을 안 보고도 한다.
+    HapticFeedback.lightImpact();
+    showFavoriteToast(
+      context,
+      added: false,
+      onUndo: viewModel.undoRemoveFavorite,
     );
   }
 
@@ -98,6 +141,9 @@ class _WatchlistViewState extends State<WatchlistView> {
     if (picked != null) viewModel.changeSort(picked);
   }
 }
+
+/// 새로고침 한 바퀴. 요청이 짧게 끝나도 반 바퀴에서 끊기지 않을 만큼이다.
+const Duration _spin = Duration(milliseconds: 900);
 
 class _Header extends StatelessWidget {
   const _Header({
@@ -132,38 +178,47 @@ class _Header extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onSortTap,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: dimens.space1),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text(
-                        sort.label,
-                        style: AppTypography.label.copyWith(
+              Semantics(
+                button: true,
+                label: '정렬 기준 ${sort.label}',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onSortTap,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: dimens.space1),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          sort.label,
+                          style: AppTypography.label.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                        AppIcon(
+                          AppIcon.align,
+                          size: dimens.iconMd,
                           color: colors.textSecondary,
                         ),
-                      ),
-                      AppIcon(
-                        AppIcon.align,
-                        size: dimens.iconMd,
-                        color: colors.textSecondary,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
               SizedBox(width: dimens.space4),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                // 갱신 중에는 같은 요청을 겹치지 않도록 막고 색을 낮춘다.
-                onTap: isBusy ? null : onRefreshTap,
-                child: AppIcon(
-                  AppIcon.refresh,
-                  size: dimens.iconMd,
-                  color: isBusy ? colors.textDisabled : colors.textSecondary,
+              Semantics(
+                button: true,
+                enabled: !isBusy,
+                label: isBusy ? '시세 갱신 중' : '시세 새로고침',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  // 갱신 중에는 같은 요청을 겹치지 않도록 막고 색을 낮춘다.
+                  onTap: isBusy ? null : onRefreshTap,
+                  child: _SpinningRefresh(
+                    isBusy: isBusy,
+                    size: dimens.iconMd,
+                    color: isBusy ? colors.textDisabled : colors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -172,4 +227,62 @@ class _Header extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 갱신 중에는 새로고침 아이콘이 돈다. 색만 낮추면 눌린 건지 멈춘 건지 알 수 없다.
+class _SpinningRefresh extends StatefulWidget {
+  const _SpinningRefresh({
+    required this.isBusy,
+    required this.size,
+    required this.color,
+  });
+
+  final bool isBusy;
+  final double size;
+  final Color color;
+
+  @override
+  State<_SpinningRefresh> createState() => _SpinningRefreshState();
+}
+
+class _SpinningRefreshState extends State<_SpinningRefresh>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: _spin,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // 처음부터 갱신 중일 수 있다.
+    if (widget.isBusy) _controller.repeat();
+  }
+
+  @override
+  void didUpdateWidget(_SpinningRefresh oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // **상태가 바뀐 순간에만** 반응한다. 매 리빌드마다 animateTo 를 부르면
+    // 갱신한 적이 없는데도 아이콘이 한 바퀴 돈다.
+    if (oldWidget.isBusy == widget.isBusy) return;
+
+    if (widget.isBusy) {
+      _controller.repeat();
+    } else {
+      // 돌던 자리에서 끊지 않고 한 바퀴를 마치고 멈춘다.
+      _controller.animateTo(1, duration: _spin * (1 - _controller.value));
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => RotationTransition(
+    turns: _controller,
+    child: AppIcon(AppIcon.refresh, size: widget.size, color: widget.color),
+  );
 }

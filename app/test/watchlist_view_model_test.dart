@@ -14,17 +14,20 @@ const samsung = Stock(symbol: '005930', name: '삼성전자', exchangeName: '코
 const hynix = Stock(symbol: '000660', name: 'SK하이닉스', exchangeName: '코스피');
 const naver = Stock(symbol: '035420', name: 'NAVER', exchangeName: '코스피');
 
-Quote quoteOf(String symbol, {required int price, required int previousClose}) =>
-    Quote(
-      symbol: symbol,
-      price: price,
-      previousClose: previousClose,
-      open: price,
-      high: price,
-      low: price,
-      volume: 0,
-      listedShares: 1000,
-    );
+Quote quoteOf(
+  String symbol, {
+  required int price,
+  required int previousClose,
+}) => Quote(
+  symbol: symbol,
+  price: price,
+  previousClose: previousClose,
+  open: price,
+  high: price,
+  low: price,
+  volume: 0,
+  listedShares: 1000,
+);
 
 /// 요청 횟수와 실패를 제어하려고 둔 스텁.
 class StubStockRepository implements StockRepository {
@@ -105,7 +108,9 @@ void main() {
       favorites.toggle(samsung);
       final viewModel = viewModelWith(
         StubStockRepository(
-          quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+          quotes: {
+            '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+          },
         ),
       );
       expect(viewModel.state, LoadState.initial);
@@ -150,7 +155,9 @@ void main() {
       favorites.toggle(samsung);
       final viewModel = viewModelWith(
         StubStockRepository(
-          quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+          quotes: {
+            '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+          },
         ),
       );
 
@@ -239,7 +246,9 @@ void main() {
       favorites.toggle(hynix); // 시세 없음
       final viewModel = viewModelWith(
         StubStockRepository(
-          quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+          quotes: {
+            '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+          },
         ),
       );
       await viewModel.load();
@@ -255,7 +264,9 @@ void main() {
       favorites.toggle(hynix); // 시세 없음
       final viewModel = viewModelWith(
         StubStockRepository(
-          quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+          quotes: {
+            '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+          },
         ),
       );
       await viewModel.load();
@@ -322,7 +333,10 @@ void main() {
         1,
         reason: '새로고침과 재조회가 겹쳐 나가면 늦게 끝난 쪽이 더 새 시세를 덮는다',
       );
-      expect(repository.requests.last, containsAll(<String>['005930', '000660']));
+      expect(
+        repository.requests.last,
+        containsAll(<String>['005930', '000660']),
+      );
     });
 
     test('실패해도 이미 받아둔 목록은 남긴다', () async {
@@ -347,7 +361,9 @@ void main() {
   group('관심 목록 변경 반영', () {
     test('등록하면 행이 늘고 시세를 조회한다', () async {
       final repository = StubStockRepository(
-        quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+        quotes: {
+          '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+        },
       );
       final viewModel = viewModelWith(repository);
       await viewModel.load();
@@ -363,7 +379,9 @@ void main() {
       favorites.toggle(samsung);
       final viewModel = viewModelWith(
         StubStockRepository(
-          quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+          quotes: {
+            '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+          },
         ),
       );
       await viewModel.load();
@@ -397,11 +415,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 60));
 
       final rowOfHynix = viewModel.rows.firstWhere((r) => r.symbol == '000660');
-      expect(
-        rowOfHynix.isSkeleton,
-        isFalse,
-        reason: '조회가 끝난 뒤에도 스켈레톤으로 남았다',
-      );
+      expect(rowOfHynix.isSkeleton, isFalse, reason: '조회가 끝난 뒤에도 스켈레톤으로 남았다');
       expect(repository.requests.length, 2, reason: '끝난 뒤 한 번만 더 받는다');
     });
 
@@ -429,7 +443,9 @@ void main() {
     test('받아둔 시세가 있으면 재조회가 실패해도 목록을 남긴다', () async {
       favorites.toggle(samsung);
       final repository = StubStockRepository(
-        quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+        quotes: {
+          '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+        },
       );
       final viewModel = viewModelWith(repository);
       await viewModel.load();
@@ -444,7 +460,9 @@ void main() {
         LoadState.ready,
         reason: '멀쩡한 행까지 전체 실패 화면으로 덮었다',
       );
-      final rowOfSamsung = viewModel.rows.firstWhere((r) => r.symbol == '005930');
+      final rowOfSamsung = viewModel.rows.firstWhere(
+        (r) => r.symbol == '005930',
+      );
       expect(rowOfSamsung.isSkeleton, isFalse);
     });
 
@@ -452,7 +470,9 @@ void main() {
       favorites.toggle(samsung);
       final repository = StubStockRepository(
         delay: const Duration(milliseconds: 30),
-        quotes: {'005930': quoteOf('005930', price: 258000, previousClose: 269000)},
+        quotes: {
+          '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+        },
       );
       final viewModel = viewModelWith(repository);
 
@@ -462,6 +482,42 @@ void main() {
 
       await loading;
       expect(repository.requests.length, 1, reason: '조회가 두 번 나갔다');
+    });
+  });
+
+  group('스와이프 해제와 실행 취소', () {
+    test('되돌리면 원래 자리로 돌아가고 다시 조회하지 않는다', () async {
+      favorites
+        ..toggle(samsung)
+        ..toggle(hynix);
+      final repository = StubStockRepository(
+        quotes: <String, Quote>{
+          '005930': quoteOf('005930', price: 258000, previousClose: 269000),
+          '000660': quoteOf('000660', price: 412500, previousClose: 403000),
+        },
+      );
+      final viewModel = viewModelWith(repository);
+
+      await viewModel.load();
+      final int before = repository.requests.length;
+
+      viewModel.removeFavorite('005930');
+      expect(favorites.symbols, <String>['000660']);
+
+      viewModel.undoRemoveFavorite();
+
+      expect(favorites.symbols, <String>[
+        '005930',
+        '000660',
+      ], reason: '맨 뒤가 아니라 원래 자리로 돌아가야 한다');
+      expect(
+        repository.requests.length,
+        before,
+        reason: '시세를 함께 되돌리므로 재조회가 걸리면 안 된다',
+      );
+      // 되돌린 행이 스켈레톤이 아니어야 한다.
+      final row = viewModel.rows.firstWhere((r) => r.symbol == '005930');
+      expect(row.isSkeleton, isFalse);
     });
   });
 }

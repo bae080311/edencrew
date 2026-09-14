@@ -20,8 +20,10 @@ Future<WatchlistSort?> showWatchlistSortSheet(
         top: Radius.circular(context.dimens.radiusSheet),
       ),
     ),
-    builder: (BuildContext sheetContext) =>
-        _SortSheet(current: current, onSelected: Navigator.of(sheetContext).pop),
+    builder: (BuildContext sheetContext) => _SortSheet(
+      current: current,
+      onSelected: Navigator.of(sheetContext).pop,
+    ),
   );
 }
 

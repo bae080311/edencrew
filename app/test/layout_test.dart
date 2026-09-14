@@ -35,23 +35,27 @@ const Stock longName = Stock(
   exchangeName: '코스닥',
 );
 
-Quote quoteOf(String symbol, {required int price, required int previousClose}) =>
-    Quote(
-      symbol: symbol,
-      price: price,
-      previousClose: previousClose,
-      open: price,
-      high: price,
-      low: price,
-      volume: 0,
-      listedShares: 1000,
-    );
+Quote quoteOf(
+  String symbol, {
+  required int price,
+  required int previousClose,
+}) => Quote(
+  symbol: symbol,
+  price: price,
+  previousClose: previousClose,
+  open: price,
+  high: price,
+  low: price,
+  volume: 0,
+  listedShares: 1000,
+);
 
 /// 상승 · 하락 · 보합이 섞인 일별 시세. 캔들 색과 등락 부호를 모두 지난다.
 List<DailyPrice> dailyPricesOf(int count) => <DailyPrice>[
   for (int i = 0; i < count; i++)
     DailyPrice(
-      date: '2026${(i % 12 + 1).toString().padLeft(2, '0')}'
+      date:
+          '2026${(i % 12 + 1).toString().padLeft(2, '0')}'
           '${(i % 28 + 1).toString().padLeft(2, '0')}',
       close: 170000 + (i % 7) * 1500,
       diff: (i % 3 - 1) * 1200,
@@ -147,10 +151,8 @@ Widget appWith({
       Provider<StockRepository>.value(value: repository),
       ChangeNotifierProvider<FavoritesStore>.value(value: store),
       ChangeNotifierProvider<WatchlistViewModel>(
-        create: (BuildContext context) => WatchlistViewModel(
-          repository: repository,
-          favorites: store,
-        ),
+        create: (BuildContext context) =>
+            WatchlistViewModel(repository: repository, favorites: store),
       ),
       ChangeNotifierProvider<SearchViewModel>(
         // 디바운스를 없애 입력 직후 결과를 본다. 디바운스 자체는 ViewModel 테스트가 덮는다.
@@ -296,9 +298,7 @@ void main() {
   testWidgets('검색에서 등록한 종목이 관심 목록에 나타난다', (WidgetTester tester) async {
     await tester.pumpWidget(
       appWith(
-        repository: StubStockRepository(
-          searchResults: const <Stock>[samsung],
-        ),
+        repository: StubStockRepository(searchResults: const <Stock>[samsung]),
         favorites: const <Stock>[],
         textScale: 1,
       ),
@@ -456,6 +456,26 @@ void main() {
     await tester.pumpAndSettle();
 
     // 세 화면이 FavoritesStore 하나를 본다는 증거다.
+    expect(find.text('관심 종목이 없습니다'), findsOneWidget);
+  });
+
+  testWidgets('관심 행을 왼쪽으로 밀면 목록에서 빠진다', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      appWith(
+        repository: detailRepository(dailyPricesOf(20)),
+        favorites: const <Stock>[longName],
+        textScale: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(WatchlistRow), findsOneWidget);
+
+    await tester.drag(find.byType(WatchlistRow).first, const Offset(-500, 0));
+    await tester.pumpAndSettle();
+
+    // 마지막 종목을 뺐으니 빈 상태가 된다 — 스토어까지 반영됐다는 뜻이다.
+    expect(find.byType(WatchlistRow), findsNothing);
     expect(find.text('관심 종목이 없습니다'), findsOneWidget);
   });
 }

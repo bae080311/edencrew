@@ -10,6 +10,7 @@ import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
 import '../common/load_state.dart';
 import '../common/debug_log.dart';
+import 'chart_axis_ui.dart';
 import 'detail_ui_model.dart';
 
 /// 종목상세 화면의 상태와 계산을 맡는다.
@@ -33,11 +34,20 @@ class DetailViewModel extends ChangeNotifier {
 
   LoadState _state = LoadState.initial;
   String? _errorMessage;
+
+  /// 기간 전환만 실패한 경우. 첫 조회 실패(`_errorMessage`)와 신호를 나눈다 —
+  /// 전자는 화면 전체를 실패로 덮고, 후자는 이미 그린 구간을 두고 한 줄만 알린다.
+  String? _periodError;
   ChartPeriod _period = ChartPeriod.oneMonth;
   bool _isPeriodLoading = false;
 
   LoadState get state => _state;
-  String? get errorMessage => _errorMessage;
+
+  /// `failed` 일 때 화면에 그대로 나가는 문구. 기본값은 ViewModel 이 정한다.
+  String get errorMessage => _errorMessage ?? '시세를 불러오지 못했습니다';
+
+  /// 기간 전환 실패 안내. 실패한 적이 없으면 null 이라 화면이 아무것도 그리지 않는다.
+  String? get periodError => _periodError;
   ChartPeriod get period => _period;
 
   /// 기간 탭을 바꿔 새 구간을 받아오는 중.
@@ -58,7 +68,12 @@ class DetailViewModel extends ChangeNotifier {
     return stock == null ? symbol : '${stock.symbol} · ${stock.exchangeName}';
   }
 
-  String get priceLabel => _labelOf((Quote quote) => fmt.thousands(quote.price));
+  String get priceLabel =>
+      _labelOf((Quote quote) => fmt.thousands(quote.price));
+
+  /// 현재가를 숫자 그대로. View 가 값이 바뀌는 구간을 애니메이션으로 잇는 데 쓴다.
+  /// 표시 문자열은 `priceLabel` 이고 이쪽은 보간용이다 — 시세를 못 받았으면 null.
+  int? get price => _quote?.price;
 
   /// 시안은 현재가 옆 등락을 `▼ 400 (-0.22%)` 로 쓴다 — 목록 행과 표기가 다르다.
   String get changeLabel =>
@@ -84,8 +99,50 @@ class DetailViewModel extends ChangeNotifier {
   /// 최신 거래일이 먼저 오므로 그리는 쪽에서 뒤집어 쓴다.
   List<DailyPrice> get chartPrices => _prices;
 
+  /// `SliverList.builder` 가 행마다 이 getter 를 부른다. 매번 245행을 새로
+  /// 만들면 보이는 행 수만큼 곱해져 sliver 로 아낀 것을 되돌린다.
+  /// 구간이 바뀔 때만 새로 만든다.
   List<DailyPriceRowUi> get dailyRows =>
-      _prices.map(_toDailyRow).toList(growable: false);
+      _dailyRows ??= _prices.map(_toDailyRow).toList(growable: false);
+
+  List<DailyPriceRowUi>? _dailyRows;
+
+  /// 차트 축 · 크로스헤어 문자열. 포맷은 전부 여기서 끝내고 painter 는 배치만 한다.
+  ChartAxisUi get chartAxis => _chartAxis ??= _buildChartAxis();
+
+  ChartAxisUi? _chartAxis;
+
+  ChartAxisUi _buildChartAxis() {
+    if (_prices.isEmpty) return ChartAxisUi.empty;
+
+    int high = _prices.first.high;
+    int low = _prices.first.low;
+    for (final DailyPrice price in _prices) {
+      if (price.high > high) high = price.high;
+      if (price.low < low) low = price.low;
+    }
+
+    // 그리는 쪽과 같은 순서(오래된 순)로 세운다.
+    final List<String> focus = _prices.reversed
+        .map(
+          (DailyPrice p) =>
+              '${fmt.monthDay(p.date)}  ${fmt.thousands(p.close)}',
+        )
+        .toList(growable: false);
+
+    return ChartAxisUi(
+      high: high,
+      low: low,
+      highLabel: fmt.thousands(high),
+      lowLabel: fmt.thousands(low),
+      firstDateLabel: fmt.monthDay(_prices.last.date),
+      lastDateLabel: fmt.monthDay(_prices.first.date),
+      focusLabels: focus,
+    );
+  }
+
+  /// 카운트업 중간값의 표시 문자열. 값이 매 프레임 바뀌어도 포맷 규칙은 한 곳이다.
+  String labelForPrice(num value) => fmt.thousands(value.round());
 
   Future<void> load() async {
     _state = LoadState.loading;
@@ -103,7 +160,10 @@ class DetailViewModel extends ChangeNotifier {
       _stock = results[0] as Stock;
       _quote = (results[1] as Map<String, Quote>)[symbol];
       _prices = results[2] as List<DailyPrice>;
+      _dailyRows = null;
+      _chartAxis = null;
       _state = LoadState.ready;
+      _periodError = null;
     } on Object catch (error) {
       logSwallowed('상세 조회', error);
       _state = LoadState.failed;
@@ -115,7 +175,11 @@ class DetailViewModel extends ChangeNotifier {
   /// 기간 탭 전환은 **latest-wins** 다. 하나의 플래그로 전부 막으면
   /// `1개월 → 3개월` 을 빠르게 눌렀을 때 나중 의도가 무시된다.
   Future<void> changePeriod(ChartPeriod period) async {
-    if (_period == period) return;
+    // 실패한 기간은 같은 탭을 다시 눌러 재시도할 수 있어야 한다. 같은 값이라고
+    // 무조건 막으면 1년이 실패했을 때 다른 탭을 거쳐야만 복구된다.
+    // 다만 재시도가 진행 중이면 막는다 — `_periodError` 는 성공해야 비므로
+    // 이걸 빼면 연달아 누를 때마다 같은 25페이지가 다시 나간다.
+    if (_period == period && (_periodError == null || _isPeriodLoading)) return;
 
     _period = period;
     _isPeriodLoading = true;
@@ -128,11 +192,13 @@ class DetailViewModel extends ChangeNotifier {
       );
       if (period != _period) return; // 지난 탭의 응답은 버린다
       _prices = prices;
-      _errorMessage = null;
+      _dailyRows = null;
+      _chartAxis = null;
+      _periodError = null;
     } on Object catch (error) {
       if (period != _period) return;
       logSwallowed('기간 전환', error);
-      _errorMessage = _messageOf(error);
+      _periodError = _messageOf(error);
     } finally {
       if (period == _period) {
         _isPeriodLoading = false;

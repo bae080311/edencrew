@@ -86,7 +86,11 @@ void main() {
 
     test('입력을 지우면 초기 상태로 돌아간다', () async {
       final viewModel = viewModelWith(
-        StubStockRepository(byQuery: {'삼성': [samsung]}),
+        StubStockRepository(
+          byQuery: {
+            '삼성': [samsung],
+          },
+        ),
       );
 
       viewModel.onQueryChanged('삼성');
@@ -104,7 +108,9 @@ void main() {
   group('디바운스', () {
     test('연속 입력에서 마지막 것만 조회한다', () async {
       final repository = StubStockRepository(
-        byQuery: {'삼성전자': [samsung]},
+        byQuery: {
+          '삼성전자': [samsung],
+        },
       );
       final viewModel = viewModelWith(repository);
 
@@ -142,7 +148,11 @@ void main() {
   group('결과 행', () {
     test('종목명 · 종목코드 · 시장을 담는다', () async {
       final viewModel = viewModelWith(
-        StubStockRepository(byQuery: {'삼성': [samsung]}),
+        StubStockRepository(
+          byQuery: {
+            '삼성': [samsung],
+          },
+        ),
       );
 
       viewModel.onQueryChanged('삼성');
@@ -156,7 +166,11 @@ void main() {
 
     test('검색어와 맞는 구간을 알려준다', () async {
       final viewModel = viewModelWith(
-        StubStockRepository(byQuery: {'전자': [samsung]}),
+        StubStockRepository(
+          byQuery: {
+            '전자': [samsung],
+          },
+        ),
       );
 
       viewModel.onQueryChanged('전자');
@@ -169,7 +183,11 @@ void main() {
 
     test('영문은 대소문자를 가리지 않는다', () async {
       final viewModel = viewModelWith(
-        StubStockRepository(byQuery: {'naver': [naver]}),
+        StubStockRepository(
+          byQuery: {
+            'naver': [naver],
+          },
+        ),
       );
 
       viewModel.onQueryChanged('naver');
@@ -182,7 +200,11 @@ void main() {
 
     test('종목명에 검색어가 없으면 강조하지 않는다', () async {
       final viewModel = viewModelWith(
-        StubStockRepository(byQuery: {'005930': [samsung]}),
+        StubStockRepository(
+          byQuery: {
+            '005930': [samsung],
+          },
+        ),
       );
 
       viewModel.onQueryChanged('005930');
@@ -225,7 +247,11 @@ void main() {
   group('관심 등록', () {
     test('토글하면 store 에 반영되고 등록 여부를 돌려준다', () async {
       final viewModel = viewModelWith(
-        StubStockRepository(byQuery: {'삼성': [samsung]}),
+        StubStockRepository(
+          byQuery: {
+            '삼성': [samsung],
+          },
+        ),
       );
       viewModel.onQueryChanged('삼성');
       await Future<void>.delayed(const Duration(milliseconds: 30));
@@ -241,7 +267,11 @@ void main() {
     test('검색 직후에도 이미 등록된 종목은 켜진 상태로 나온다', () async {
       favorites.toggle(samsung);
       final viewModel = viewModelWith(
-        StubStockRepository(byQuery: {'삼성': [samsung, samsungElec]}),
+        StubStockRepository(
+          byQuery: {
+            '삼성': [samsung, samsungElec],
+          },
+        ),
       );
 
       viewModel.onQueryChanged('삼성');
@@ -252,7 +282,11 @@ void main() {
 
     test('다른 화면에서 관심이 바뀌면 검색 결과도 따라 바뀐다', () async {
       final viewModel = viewModelWith(
-        StubStockRepository(byQuery: {'삼성': [samsung]}),
+        StubStockRepository(
+          byQuery: {
+            '삼성': [samsung],
+          },
+        ),
       );
       viewModel.onQueryChanged('삼성');
       await Future<void>.delayed(const Duration(milliseconds: 30));
@@ -303,14 +337,44 @@ void main() {
 
       // 90ms — '삼성' 응답은 도착했고 '삼성전기' 요청은 아직 나가지도 않았다.
       await Future<void>.delayed(const Duration(milliseconds: 30));
-      expect(
-        viewModel.rows,
-        isEmpty,
-        reason: '옛 검색어의 결과가 새 입력 아래에 남았다',
-      );
+      expect(viewModel.rows, isEmpty, reason: '옛 검색어의 결과가 새 입력 아래에 남았다');
 
       await Future<void>.delayed(const Duration(milliseconds: 240));
       expect(viewModel.rows.single.name, '삼성전기');
+    });
+  });
+
+  group('최근 검색어', () {
+    test('누른 행을 만든 검색어를 남긴다 — 입력 중인 검색어가 아니다', () async {
+      final repository = StubStockRepository(
+        byQuery: <String, List<Stock>>{
+          '삼성': <Stock>[samsung],
+          '카카오': <Stock>[],
+        },
+      );
+      final viewModel = viewModelWith(repository);
+
+      viewModel.onQueryChanged('삼성');
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      expect(viewModel.rows.single.name, '삼성전자');
+
+      // 입력만 바꾸고 새 응답이 오기 전에 떠 있는 삼성 행을 누른다.
+      viewModel.onQueryChanged('카카오');
+      viewModel.recordQuery();
+
+      expect(viewModel.recentQueries, <String>[
+        '삼성',
+      ], reason: '화면에 떠 있던 결과를 만든 검색어가 남아야 한다');
+    });
+
+    test('결과가 없으면 남기지 않는다', () async {
+      final viewModel = viewModelWith(StubStockRepository());
+
+      viewModel.onQueryChanged('없는종목');
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      viewModel.recordQuery();
+
+      expect(viewModel.recentQueries, isEmpty);
     });
   });
 }

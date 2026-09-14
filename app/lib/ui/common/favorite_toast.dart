@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/theme.dart';
-import '../common/app_icon.dart';
+import 'app_icon.dart';
 
 /// 시안에 노출 시간이 없다. 별 아이콘이 행에서 이미 바뀌어 토스트는 보조 확인이라
 /// 짧게 둔다. 여러 종목을 연달아 등록할 때 이전 토스트가 다음 조작을 가리지 않는 길이다.
 const Duration _duration = Duration(seconds: 2);
 
+/// 되돌릴 수 있는 토스트는 읽고 손을 뻗을 시간이 필요하다. 2초는 파괴적 동작을
+/// 취소하기에 짧다.
+const Duration _undoDuration = Duration(seconds: 5);
+
 /// 시안의 그림자는 `0 8 24 rgba(0,0,0,.55)` 인데 SnackBar 의 elevation 으로 근사했다.
 const double _elevation = 8;
-
 
 /// 관심 등록 · 해제 결과를 화면 하단에 알린다.
 ///
 /// 직접 `Overlay` 를 짜지 않는다. 노출 시간 · 등퇴장 애니메이션 · 탭 바 위 배치를
 /// `ScaffoldMessenger` 가 이미 한다.
-void showFavoriteToast(BuildContext context, {required bool added}) {
+///
+/// [onUndo] 를 주면 `실행 취소` 를 함께 띄운다. 스와이프처럼 되돌릴 방법이 없는
+/// 동작에만 붙인다 — 별 아이콘은 다시 누르면 되므로 필요 없다.
+void showFavoriteToast(
+  BuildContext context, {
+  required bool added,
+  VoidCallback? onUndo,
+}) {
   final AppColors colors = context.colors;
   final AppDimens dimens = context.dimens;
 
@@ -24,7 +34,7 @@ void showFavoriteToast(BuildContext context, {required bool added}) {
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        duration: _duration,
+        duration: onUndo == null ? _duration : _undoDuration,
         behavior: SnackBarBehavior.floating,
         elevation: _elevation,
         backgroundColor: colors.surfaceOverlay,
@@ -58,6 +68,33 @@ void showFavoriteToast(BuildContext context, {required bool added}) {
                 style: AppTypography.label.copyWith(color: colors.textPrimary),
               ),
             ),
+            if (onUndo != null) ...<Widget>[
+              SizedBox(width: dimens.space3),
+              Semantics(
+                button: true,
+                label: '해제 실행 취소',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    onUndo();
+                  },
+                  // 글자만 두면 탭 영역이 18px 남짓이라 손가락으로 놓치기 쉽다.
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: dimens.space2,
+                      vertical: dimens.space3,
+                    ),
+                    child: Text(
+                      '실행 취소',
+                      style: AppTypography.label.copyWith(
+                        color: colors.accentDefault,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

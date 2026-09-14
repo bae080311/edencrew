@@ -61,8 +61,9 @@ class FakeStockRepository implements StockRepository {
 
     final response = await _loadJson('$_dir/realtime_batch.json', cp949);
     final Map<String, Quote> stored = <String, Quote>{
-      for (final RealtimeQuoteDto dto
-          in RealtimeQuoteDto.listFromResponse(response))
+      for (final RealtimeQuoteDto dto in RealtimeQuoteDto.listFromResponse(
+        response,
+      ))
         dto.cd: dto.toQuote(),
     };
     // 저장해 두지 않은 종목은 빠진다 — 실제와 같이 그 행은 스켈레톤으로 남는다.

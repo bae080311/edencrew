@@ -6,8 +6,7 @@ import 'package:edencrew_assignment_starter/data/dto/daily_price_dto.dart';
 import 'package:edencrew_assignment_starter/data/source/sise_day_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-List<int> mockBytes(String name) =>
-    File('assets/mock/$name').readAsBytesSync();
+List<int> mockBytes(String name) => File('assets/mock/$name').readAsBytesSync();
 
 const parser = SiseDayParser();
 
@@ -106,7 +105,10 @@ void main() {
     });
 
     test('페이지 정보를 못 읽으면 요청한 페이지를 하한으로 쓴다', () {
-      final page = parser.parse(cp949.encode('<html></html>'), requestedPage: 3);
+      final page = parser.parse(
+        cp949.encode('<html></html>'),
+        requestedPage: 3,
+      );
 
       expect(page.lastPage, 3);
       expect(page.items, isEmpty);

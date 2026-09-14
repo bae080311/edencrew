@@ -40,6 +40,7 @@ class StubStockRepository implements StockRepository {
     this.delays = const <ChartPeriod, Duration>{},
     this.hasQuote = true,
     this.error,
+    this.failPeriods = const <ChartPeriod>{},
   });
 
   final Map<ChartPeriod, List<DailyPrice>> byPeriod;
@@ -48,6 +49,9 @@ class StubStockRepository implements StockRepository {
   /// 거래정지 등으로 batch 응답에서 종목이 빠져 오는 경우를 만든다.
   final bool hasQuote;
   final Object? error;
+
+  /// 첫 조회는 되고 **기간 전환만** 실패하는 상황을 만든다.
+  final Set<ChartPeriod> failPeriods;
 
   final List<ChartPeriod> requestedPeriods = <ChartPeriod>[];
 
@@ -60,6 +64,7 @@ class StubStockRepository implements StockRepository {
     final Duration? delay = delays[period];
     if (delay != null) await Future<void>.delayed(delay);
     if (error != null) throw error!;
+    if (failPeriods.contains(period)) throw Exception('period');
     return byPeriod[period] ?? <DailyPrice>[priceOf('20260911')];
   }
 
@@ -112,6 +117,76 @@ void main() {
 
       expect(viewModel.state, LoadState.failed);
       expect(viewModel.errorMessage, '시세를 불러오지 못했습니다');
+    });
+
+    test('기간 전환만 실패하면 화면을 덮지 않고 periodError 로만 알린다', () async {
+      final viewModel = viewModelWith(
+        StubStockRepository(
+          failPeriods: const <ChartPeriod>{ChartPeriod.threeMonths},
+        ),
+      );
+
+      await viewModel.load();
+      expect(viewModel.periodError, isNull, reason: '첫 조회는 성공했다');
+
+      await viewModel.changePeriod(ChartPeriod.threeMonths);
+
+      // 이미 그린 1개월 구간은 그대로 두고 한 줄로만 알린다.
+      expect(viewModel.state, LoadState.ready);
+      expect(viewModel.periodError, '시세를 불러오지 못했습니다');
+
+      // 다시 성공하면 안내가 사라진다.
+      await viewModel.changePeriod(ChartPeriod.sixMonths);
+      expect(viewModel.periodError, isNull);
+    });
+
+    test('실패한 기간은 같은 탭을 다시 눌러 재시도할 수 있다', () async {
+      final repository = StubStockRepository(
+        failPeriods: const <ChartPeriod>{ChartPeriod.oneYear},
+      );
+      final viewModel = viewModelWith(repository);
+
+      await viewModel.load();
+      await viewModel.changePeriod(ChartPeriod.oneYear);
+      expect(viewModel.periodError, isNotNull);
+
+      final int before = repository.requestedPeriods.length;
+      // 다른 탭을 거치지 않고 같은 탭을 다시 누른다.
+      await viewModel.changePeriod(ChartPeriod.oneYear);
+
+      expect(
+        repository.requestedPeriods.length,
+        greaterThan(before),
+        reason: '같은 기간이라도 실패한 뒤에는 다시 요청해야 한다',
+      );
+    });
+
+    test('재시도가 진행 중이면 같은 탭을 또 눌러도 요청이 겹치지 않는다', () async {
+      final repository = StubStockRepository(
+        failPeriods: const <ChartPeriod>{ChartPeriod.oneYear},
+        delays: const <ChartPeriod, Duration>{
+          ChartPeriod.oneYear: Duration(milliseconds: 40),
+        },
+      );
+      final viewModel = viewModelWith(repository);
+
+      await viewModel.load();
+      await viewModel.changePeriod(ChartPeriod.oneYear);
+      final int before = repository.requestedPeriods.length;
+
+      // 연달아 세 번 누른다. 진행 중인 재시도가 있으므로 한 번만 나가야 한다.
+      final futures = <Future<void>>[
+        viewModel.changePeriod(ChartPeriod.oneYear),
+        viewModel.changePeriod(ChartPeriod.oneYear),
+        viewModel.changePeriod(ChartPeriod.oneYear),
+      ];
+      await Future.wait(futures);
+
+      expect(
+        repository.requestedPeriods.length - before,
+        1,
+        reason: '1년은 25페이지라 겹치면 요청이 두 배가 된다',
+      );
     });
   });
 
@@ -345,6 +420,52 @@ void main() {
 
       expect(viewModel.name, '005930');
       expect(viewModel.marketLabel, '005930');
+    });
+  });
+
+  group('차트 축', () {
+    test('축 문자열과 눈금 기준을 ViewModel 이 만든다', () async {
+      final viewModel = viewModelWith(
+        StubStockRepository(
+          byPeriod: <ChartPeriod, List<DailyPrice>>{
+            ChartPeriod.oneMonth: <DailyPrice>[
+              priceOf('20260911'),
+              priceOf('20260910'),
+            ],
+          },
+        ),
+      );
+
+      await viewModel.load();
+      final axis = viewModel.chartAxis;
+
+      expect(axis.high, greaterThanOrEqualTo(axis.low));
+      expect(axis.highLabel, contains(','), reason: '천 단위 쉼표가 들어간다');
+      // 가로축은 오래된 쪽이 왼쪽이다.
+      expect(axis.firstDateLabel, '09.10');
+      expect(axis.lastDateLabel, '09.11');
+      expect(axis.focusLabels.length, 2, reason: '짚을 수 있는 거래일마다 하나씩 있어야 한다');
+      expect(axis.focusLabels.first, startsWith('09.10'));
+    });
+
+    test('구간이 바뀌면 축도 다시 만든다', () async {
+      final viewModel = viewModelWith(
+        StubStockRepository(
+          byPeriod: <ChartPeriod, List<DailyPrice>>{
+            ChartPeriod.oneMonth: <DailyPrice>[priceOf('20260911')],
+            ChartPeriod.threeMonths: <DailyPrice>[
+              priceOf('20260911'),
+              priceOf('20260901'),
+            ],
+          },
+        ),
+      );
+
+      await viewModel.load();
+      expect(viewModel.chartAxis.focusLabels.length, 1);
+
+      await viewModel.changePeriod(ChartPeriod.threeMonths);
+      expect(viewModel.chartAxis.focusLabels.length, 2);
     });
   });
 }

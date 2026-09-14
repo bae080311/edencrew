@@ -2,16 +2,8 @@ import 'package:edencrew_assignment_starter/data/model/stock.dart';
 import 'package:edencrew_assignment_starter/state/favorites_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const samsung = Stock(
-  symbol: '005930',
-  name: '삼성전자',
-  exchangeName: '코스피',
-);
-const hynix = Stock(
-  symbol: '000660',
-  name: 'SK하이닉스',
-  exchangeName: '코스피',
-);
+const samsung = Stock(symbol: '005930', name: '삼성전자', exchangeName: '코스피');
+const hynix = Stock(symbol: '000660', name: 'SK하이닉스', exchangeName: '코스피');
 const naver = Stock(symbol: '035420', name: 'NAVER', exchangeName: '코스피');
 
 void main() {
@@ -109,5 +101,33 @@ void main() {
     store.toggle(samsung);
 
     expect(() => store.stocks.add(hynix), throwsUnsupportedError);
+  });
+
+  test('원래 자리로 되돌린다 — 맨 뒤가 아니다', () {
+    final store = FavoritesStore()
+      ..toggle(samsung)
+      ..toggle(hynix)
+      ..toggle(naver);
+
+    final int index = store.indexOf('000660');
+    expect(index, 1);
+
+    store.remove('000660');
+    expect(store.symbols, <String>['005930', '035420']);
+
+    store.insert(index, hynix);
+    expect(store.symbols, <String>[
+      '005930',
+      '000660',
+      '035420',
+    ], reason: '맨 뒤에 붙이면 등록 순서가 바뀐다');
+  });
+
+  test('이미 있는 종목은 되돌려도 중복되지 않는다', () {
+    final store = FavoritesStore()..toggle(samsung);
+
+    store.insert(0, samsung);
+
+    expect(store.symbols, <String>['005930']);
   });
 }

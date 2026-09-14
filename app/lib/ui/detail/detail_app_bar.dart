@@ -30,26 +30,37 @@ class DetailAppBar extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => Navigator.of(context).maybePop(),
-            child: AppIcon(
-              AppIcon.back,
-              size: dimens.iconMd,
-              color: colors.textSecondary,
+          Semantics(
+            button: true,
+            label: '뒤로 가기',
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(context).maybePop(),
+              child: AppIcon(
+                AppIcon.back,
+                size: dimens.iconMd,
+                color: colors.textSecondary,
+              ),
             ),
           ),
           SizedBox(width: dimens.space3),
           Expanded(child: _identity(colors, dimens)),
           SizedBox(width: dimens.space3),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            // 조회 중 · 실패 상태에서는 누를 수 없다. 새로고침 버튼과 같은 방식이다.
-            onTap: viewModel.canToggleFavorite ? viewModel.toggleFavorite : null,
-            child: AppIcon(
-              viewModel.isFavorite ? AppIcon.starFill : AppIcon.star,
-              size: dimens.iconFavorite,
-              color: _favoriteColor(colors),
+          Semantics(
+            button: true,
+            enabled: viewModel.canToggleFavorite,
+            label: viewModel.isFavorite ? '관심 해제' : '관심 등록',
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              // 조회 중 · 실패 상태에서는 누를 수 없다. 새로고침 버튼과 같은 방식이다.
+              onTap: viewModel.canToggleFavorite
+                  ? viewModel.toggleFavorite
+                  : null,
+              child: AppIcon(
+                viewModel.isFavorite ? AppIcon.starFill : AppIcon.star,
+                size: dimens.iconFavorite,
+                color: _favoriteColor(colors),
+              ),
             ),
           ),
         ],
