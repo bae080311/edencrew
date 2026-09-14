@@ -27,7 +27,7 @@
 
 **선택**
 
-- [ ] Pull to refresh
+- [x] Pull to refresh
 - [ ] 관심종목 삭제 (스와이프 등)
 - [ ] 정렬 기준을 앱 재실행 후에도 유지
 
