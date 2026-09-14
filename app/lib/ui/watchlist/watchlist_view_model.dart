@@ -7,7 +7,7 @@ import '../../data/model/stock.dart';
 import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
 import '../../state/preferences.dart';
-import '../common/debug_log.dart';
+import '../../core/debug_log.dart';
 import '../common/load_state.dart';
 import 'watchlist_ui_model.dart';
 import 'watchlist_sort.dart';

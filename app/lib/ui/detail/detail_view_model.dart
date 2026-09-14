@@ -9,7 +9,7 @@ import '../../data/model/stock.dart';
 import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
 import '../common/load_state.dart';
-import '../common/debug_log.dart';
+import '../../core/debug_log.dart';
 import 'chart_axis_ui.dart';
 import 'detail_ui_model.dart';
 
