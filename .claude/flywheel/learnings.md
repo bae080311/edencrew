@@ -41,3 +41,4 @@
 - 2026-09-14 | `errorMessage` 의 nullable 을 없애자 상세 화면 기간 전환 안내가 항상 뜨는 버그가 생겼다. 그 null 이 "값 없음"이 아니라 **두 실패를 가르는 상태 구분**에 쓰이고 있었다 → **nullable 을 없애기 전에 그 null 이 무엇을 뜻했는지 먼저 찾는다.** `flutter analyze` 의 `info` 한 줄이 잡아 줬다
 - 2026-09-14 | 예외를 삼키면서 **메시지만** 남기고 스택을 버렸다. 같은 문구(`시세를 불러오지 못했습니다`)가 네 경로에서 나와 로그를 봐도 어디서 났는지 몰라 결국 재현했다 → **삼킬 때는 스택도 같이 남긴다.** 그리고 화면이 잡는 건 조회 실패뿐이라 위젯 빌드 오류·`await` 없는 Future 는 아무 데도 안 걸린다 — `FlutterError.onError` 와 `PlatformDispatcher.instance.onError` 를 처음부터 걸어 둔다
 - 2026-09-14 | `shared_preferences` 쓰기를 `await` 하지 않아 실패가 통째로 사라지고 있었다. 읽기도 기대한 타입이 아니면 던지는데 `FormatException` 만 잡고 있었다 → **fire-and-forget 은 실패를 버린다는 뜻이다.** 기다리지 않더라도 `catchError` 는 붙인다
+- 2026-09-14 | Lucy Studio 0.0.34 — 컴포넌트 인스턴스는 스튜디오 캔버스에만 그려지고 프리뷰 런타임에서는 렌더되지 않는다. 내부 위젯 id 는 밖에서 안 보이고(`txtName is not defined`), 인스턴스의 `setVar`/`getVar` 는 선언한 변수를 모른다(`undefined`). 컴포넌트로 화면 요소를 나누기 전에 **고정 문자열을 박은 인스턴스 하나를 프리뷰에서 먼저 띄워 본다.**
