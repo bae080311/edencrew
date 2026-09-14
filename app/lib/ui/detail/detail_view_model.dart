@@ -33,11 +33,19 @@ class DetailViewModel extends ChangeNotifier {
 
   LoadState _state = LoadState.initial;
   String? _errorMessage;
+
+  /// 기간 전환만 실패한 경우. 첫 조회 실패(`_errorMessage`)와 신호를 나눈다 —
+  /// 전자는 화면 전체를 실패로 덮고, 후자는 이미 그린 구간을 두고 한 줄만 알린다.
+  String? _periodError;
   ChartPeriod _period = ChartPeriod.oneMonth;
   bool _isPeriodLoading = false;
 
   LoadState get state => _state;
-  String? get errorMessage => _errorMessage;
+  /// `failed` 일 때 화면에 그대로 나가는 문구. 기본값은 ViewModel 이 정한다.
+  String get errorMessage => _errorMessage ?? '시세를 불러오지 못했습니다';
+
+  /// 기간 전환 실패 안내. 실패한 적이 없으면 null 이라 화면이 아무것도 그리지 않는다.
+  String? get periodError => _periodError;
   ChartPeriod get period => _period;
 
   /// 기간 탭을 바꿔 새 구간을 받아오는 중.
@@ -59,6 +67,10 @@ class DetailViewModel extends ChangeNotifier {
   }
 
   String get priceLabel => _labelOf((Quote quote) => fmt.thousands(quote.price));
+
+  /// 현재가를 숫자 그대로. View 가 값이 바뀌는 구간을 애니메이션으로 잇는 데 쓴다.
+  /// 표시 문자열은 `priceLabel` 이고 이쪽은 보간용이다 — 시세를 못 받았으면 null.
+  int? get price => _quote?.price;
 
   /// 시안은 현재가 옆 등락을 `▼ 400 (-0.22%)` 로 쓴다 — 목록 행과 표기가 다르다.
   String get changeLabel =>
@@ -104,6 +116,7 @@ class DetailViewModel extends ChangeNotifier {
       _quote = (results[1] as Map<String, Quote>)[symbol];
       _prices = results[2] as List<DailyPrice>;
       _state = LoadState.ready;
+      _periodError = null;
     } on Object catch (error) {
       logSwallowed('상세 조회', error);
       _state = LoadState.failed;
@@ -128,11 +141,11 @@ class DetailViewModel extends ChangeNotifier {
       );
       if (period != _period) return; // 지난 탭의 응답은 버린다
       _prices = prices;
-      _errorMessage = null;
+      _periodError = null;
     } on Object catch (error) {
       if (period != _period) return;
       logSwallowed('기간 전환', error);
-      _errorMessage = _messageOf(error);
+      _periodError = _messageOf(error);
     } finally {
       if (period == _period) {
         _isPeriodLoading = false;

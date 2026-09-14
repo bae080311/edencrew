@@ -7,47 +7,13 @@ import 'detail_ui_model.dart';
 /// 시안 `grid` 의 날짜 칸 폭. 한 위젯의 상자 크기라 토큰으로 올리지 않았다.
 const double _dateWidth = 46;
 
-/// `날짜 · 종가 · 등락 · 거래량` 네 컬럼의 일별 시세 표.
+/// 일별 시세 한 줄.
 ///
-/// 1년치 245행을 한 번에 만든다. 무한 스크롤(선택 항목)을 붙이게 되면 그때 `SliverList` 로 바꾼다.
-class DailyPriceTable extends StatelessWidget {
-  const DailyPriceTable({required this.rows, super.key});
-
-  final List<DailyPriceRowUi> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColors colors = context.colors;
-
-    return Column(
-      children: <Widget>[
-        _Row(
-          date: '날짜',
-          close: '종가',
-          diff: '등락',
-          volume: '거래량',
-          dateColor: colors.textSecondary,
-          closeColor: colors.textSecondary,
-          diffColor: colors.textSecondary,
-        ),
-        for (final DailyPriceRowUi row in rows)
-          _Row(
-            date: row.dateLabel,
-            close: row.closeLabel,
-            diff: row.diffLabel,
-            volume: row.volumeLabel,
-            dateColor: colors.textSecondary,
-            closeColor: colors.textPrimary,
-            diffColor: priceToneText(colors, row.tone),
-            hasTopBorder: true,
-          ),
-      ],
-    );
-  }
-}
-
-class _Row extends StatelessWidget {
-  const _Row({
+/// 1년치가 245행이라 [DailyPriceRow.of] 로 한 줄씩 만들어 `SliverList` 가
+/// **보이는 만큼만** 빌드하게 한다. `Column` 으로 한 번에 만들면 위젯 천 개 이상을
+/// 한 프레임에 세워 기간을 1년으로 바꿀 때 화면이 눈에 띄게 멈춘다.
+class DailyPriceRow extends StatelessWidget {
+  const DailyPriceRow({
     required this.date,
     required this.close,
     required this.diff,
@@ -56,7 +22,37 @@ class _Row extends StatelessWidget {
     required this.closeColor,
     required this.diffColor,
     this.hasTopBorder = false,
+    super.key,
   });
+
+  /// 표의 머리글. 값 대신 컬럼 이름이 들어간 같은 줄이라 별도 타입을 두지 않는다.
+  factory DailyPriceRow.header(BuildContext context) {
+    final AppColors colors = context.colors;
+    return DailyPriceRow(
+      date: '날짜',
+      close: '종가',
+      diff: '등락',
+      volume: '거래량',
+      dateColor: colors.textSecondary,
+      closeColor: colors.textSecondary,
+      diffColor: colors.textSecondary,
+    );
+  }
+
+  /// 행 모델에서 바로 만든다. 색 결정은 여기 한 곳에 모은다.
+  factory DailyPriceRow.of(BuildContext context, DailyPriceRowUi row) {
+    final AppColors colors = context.colors;
+    return DailyPriceRow(
+      date: row.dateLabel,
+      close: row.closeLabel,
+      diff: row.diffLabel,
+      volume: row.volumeLabel,
+      dateColor: colors.textSecondary,
+      closeColor: colors.textPrimary,
+      diffColor: priceToneText(colors, row.tone),
+      hasTopBorder: true,
+    );
+  }
 
   final String date;
   final String close;
@@ -73,9 +69,7 @@ class _Row extends StatelessWidget {
     final AppDimens dimens = context.dimens;
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: dimens.tableRowPaddingVertical,
-      ),
+      padding: EdgeInsets.symmetric(vertical: dimens.tableRowPaddingVertical),
       decoration: hasTopBorder
           ? BoxDecoration(
               border: Border(

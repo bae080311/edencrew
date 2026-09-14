@@ -1,124 +1,125 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../data/model/daily_price.dart';
-import '../../data/model/price_tone.dart';
 import '../../theme/theme.dart';
+import 'candle_painter.dart';
 
-/// 일별 시세를 캔들로 그린다. 축 라벨 · 거래량 바 · 크로스헤어는 과제의 선택 항목이라 넣지 않았다.
-class CandleChart extends StatelessWidget {
-  const CandleChart({required this.prices, super.key});
+/// 일별 시세 차트. 캔들 · 거래량 바 · 축 라벨 · 기간 방향 영역을 한 캔버스에 그린다.
+///
+/// 크로스헤어는 [onFocusChanged] 로 위임한다 — 이 위젯은 그리기만 하고
+/// 무엇을 보여줄지는 상세 화면이 정한다.
+class CandleChart extends StatefulWidget {
+  const CandleChart({required this.prices, this.onFocusChanged, super.key});
 
   /// 최신 거래일이 먼저 온다. 왼쪽이 과거가 되도록 뒤에서부터 그린다.
   final List<DailyPrice> prices;
 
+  /// 손가락이 짚은 거래일. 떼면 null 이 간다.
+  final ValueChanged<DailyPrice?>? onFocusChanged;
+
   /// 시안 `Chart` 프레임 높이. 이 화면 밖에서 쓰지 않아 토큰으로 올리지 않았다.
   static const double _height = 200;
+
+  @override
+  State<CandleChart> createState() => _CandleChartState();
+}
+
+/// 등장 애니메이션 길이. 화면을 여는 흐름을 끊지 않을 만큼만 준다 —
+/// 길면 값을 확인하러 온 사람을 기다리게 한다. 이보다 짧으면 물결이 안 보이고
+/// 그냥 툭 뜨는 것과 같아진다.
+const Duration _reveal = Duration(milliseconds: 410);
+
+class _CandleChartState extends State<CandleChart>
+    with SingleTickerProviderStateMixin {
+  int? _focusIndex;
+
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: _reveal,
+  )..forward();
+
+  /// 앞부분이 빠르게 지나가고 끝에서 잦아든다. 선형이면 끝까지 같은 속도라 늘어진다.
+  late final CurvedAnimation _curve = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutCubic,
+  );
+
+  @override
+  void didUpdateWidget(CandleChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 기간을 바꿔 봉이 갈리면 다시 왼쪽부터 그린다.
+    if (!identical(oldWidget.prices, widget.prices)) {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
 
     return SizedBox(
-      height: _height,
+      height: CandleChart._height,
       width: double.infinity,
-      child: CustomPaint(
-        painter: _CandlePainter(
-          prices: prices,
-          up: colors.chartLineUp,
-          down: colors.chartLineDown,
-          flat: colors.chartLineFlat,
-          wick: colors.chartBaseline,
+      child: GestureDetector(
+        onHorizontalDragStart: (DragStartDetails d) =>
+            _focus(d.localPosition.dx),
+        onHorizontalDragUpdate: (DragUpdateDetails d) =>
+            _focus(d.localPosition.dx),
+        onHorizontalDragEnd: (_) => _clear(),
+        onHorizontalDragCancel: _clear,
+        onTapDown: (TapDownDetails d) => _focus(d.localPosition.dx),
+        onTapUp: (_) => _clear(),
+        onTapCancel: _clear,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (BuildContext context, Widget? _) => CustomPaint(
+          painter: CandlePainter(
+            prices: widget.prices,
+            focusIndex: _focusIndex,
+            progress: _curve.value,
+            up: colors.chartLineUp,
+            down: colors.chartLineDown,
+            flat: colors.chartLineFlat,
+            wick: colors.chartBaseline,
+            areaUp: colors.chartAreaUp,
+            areaDown: colors.chartAreaDown,
+            axisLabel: colors.chartAxisLabel,
+            volumeBar: colors.chartVolumeBar,
+            ),
+          ),
         ),
       ),
     );
   }
-}
 
-class _CandlePainter extends CustomPainter {
-  _CandlePainter({
-    required this.prices,
-    required this.up,
-    required this.down,
-    required this.flat,
-    required this.wick,
-  });
+  /// 가로 위치를 거래일 인덱스로 바꾼다. 그리는 순서와 같게 뒤에서부터 센다.
+  void _focus(double dx) {
+    final int count = widget.prices.length;
+    if (count == 0) return;
 
-  final List<DailyPrice> prices;
-  final Color up;
-  final Color down;
-  final Color flat;
-  final Color wick;
+    final double width = context.size?.width ?? 0;
+    if (width <= 0) return;
 
-  /// 캔들 사이 간격은 시안 값(1.2). 심지 굵기는 시안이 0.3 이지만 1년치 245개를
-  /// 그리면 사라져서 최소 굵기를 따로 잡았다.
-  static const double _gap = 1.2;
-  static const double _minWidth = 0.8;
+    final int slot = (dx / (width / count)).floor().clamp(0, count - 1);
+    if (slot == _focusIndex) return;
 
-  /// 맨 위 · 맨 아래 캔들의 심지가 잘리지 않을 만큼만 띄운다.
-  static const double _inset = 4;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (prices.isEmpty) return;
-
-    int lowest = prices.first.low;
-    int highest = prices.first.high;
-    for (final DailyPrice price in prices) {
-      lowest = math.min(lowest, price.low);
-      highest = math.max(highest, price.high);
-    }
-
-    final double span = (highest - lowest).toDouble();
-    final double usable = math.max(size.height - _inset * 2, 1);
-    // 구간 전체가 같은 값이면 나눌 것이 없다. 가운데 한 줄로 그린다.
-    double y(int value) => span == 0
-        ? size.height / 2
-        : _inset + usable * (highest - value) / span;
-
-    final double slot = size.width / prices.length;
-    final double bodyWidth = math.max(slot - _gap, _minWidth);
-    final Paint wickPaint = Paint()
-      ..color = wick
-      ..strokeWidth = math.max(_minWidth, bodyWidth * 0.2);
-
-    for (int i = 0; i < prices.length; i++) {
-      final DailyPrice price = prices[prices.length - 1 - i];
-      final double centerX = slot * (i + 0.5);
-
-      canvas.drawLine(
-        Offset(centerX, y(price.high)),
-        Offset(centerX, y(price.low)),
-        wickPaint,
-      );
-
-      final double top = y(math.max(price.open, price.close));
-      final double bottom = y(math.min(price.open, price.close));
-      canvas.drawRect(
-        Rect.fromLTRB(
-          centerX - bodyWidth / 2,
-          top,
-          centerX + bodyWidth / 2,
-          // 시가 = 종가면 높이가 0 이라 아무것도 안 보인다.
-          math.max(bottom, top + _minWidth),
-        ),
-        Paint()..color = _colorOf(price.candleTone),
-      );
-    }
+    setState(() => _focusIndex = slot);
+    // 봉이 바뀔 때마다 한 번. 손가락이 어디를 짚었는지 화면을 안 봐도 안다.
+    HapticFeedback.selectionClick();
+    widget.onFocusChanged?.call(widget.prices[count - 1 - slot]);
   }
 
-  Color _colorOf(PriceTone tone) => switch (tone) {
-    PriceTone.up => up,
-    PriceTone.down => down,
-    PriceTone.flat => flat,
-  };
-
-  @override
-  bool shouldRepaint(_CandlePainter oldDelegate) =>
-      oldDelegate.prices != prices ||
-      oldDelegate.up != up ||
-      oldDelegate.down != down ||
-      oldDelegate.flat != flat ||
-      oldDelegate.wick != wick;
+  void _clear() {
+    if (_focusIndex == null) return;
+    setState(() => _focusIndex = null);
+    widget.onFocusChanged?.call(null);
+  }
 }

@@ -40,6 +40,7 @@ class StubStockRepository implements StockRepository {
     this.delays = const <ChartPeriod, Duration>{},
     this.hasQuote = true,
     this.error,
+    this.failPeriods = const <ChartPeriod>{},
   });
 
   final Map<ChartPeriod, List<DailyPrice>> byPeriod;
@@ -48,6 +49,9 @@ class StubStockRepository implements StockRepository {
   /// 거래정지 등으로 batch 응답에서 종목이 빠져 오는 경우를 만든다.
   final bool hasQuote;
   final Object? error;
+
+  /// 첫 조회는 되고 **기간 전환만** 실패하는 상황을 만든다.
+  final Set<ChartPeriod> failPeriods;
 
   final List<ChartPeriod> requestedPeriods = <ChartPeriod>[];
 
@@ -60,6 +64,7 @@ class StubStockRepository implements StockRepository {
     final Duration? delay = delays[period];
     if (delay != null) await Future<void>.delayed(delay);
     if (error != null) throw error!;
+    if (failPeriods.contains(period)) throw Exception('period');
     return byPeriod[period] ?? <DailyPrice>[priceOf('20260911')];
   }
 
@@ -112,6 +117,27 @@ void main() {
 
       expect(viewModel.state, LoadState.failed);
       expect(viewModel.errorMessage, '시세를 불러오지 못했습니다');
+    });
+
+    test('기간 전환만 실패하면 화면을 덮지 않고 periodError 로만 알린다', () async {
+      final viewModel = viewModelWith(
+        StubStockRepository(failPeriods: const <ChartPeriod>{
+          ChartPeriod.threeMonths,
+        }),
+      );
+
+      await viewModel.load();
+      expect(viewModel.periodError, isNull, reason: '첫 조회는 성공했다');
+
+      await viewModel.changePeriod(ChartPeriod.threeMonths);
+
+      // 이미 그린 1개월 구간은 그대로 두고 한 줄로만 알린다.
+      expect(viewModel.state, LoadState.ready);
+      expect(viewModel.periodError, '시세를 불러오지 못했습니다');
+
+      // 다시 성공하면 안내가 사라진다.
+      await viewModel.changePeriod(ChartPeriod.sixMonths);
+      expect(viewModel.periodError, isNull);
     });
   });
 
