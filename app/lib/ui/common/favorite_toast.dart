@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/theme.dart';
-import '../common/app_icon.dart';
+import 'app_icon.dart';
 
 /// 시안에 노출 시간이 없다. 별 아이콘이 행에서 이미 바뀌어 토스트는 보조 확인이라
 /// 짧게 둔다. 여러 종목을 연달아 등록할 때 이전 토스트가 다음 조작을 가리지 않는 길이다.
@@ -15,7 +15,14 @@ const double _elevation = 8;
 ///
 /// 직접 `Overlay` 를 짜지 않는다. 노출 시간 · 등퇴장 애니메이션 · 탭 바 위 배치를
 /// `ScaffoldMessenger` 가 이미 한다.
-void showFavoriteToast(BuildContext context, {required bool added}) {
+///
+/// [onUndo] 를 주면 `실행 취소` 를 함께 띄운다. 스와이프처럼 되돌릴 방법이 없는
+/// 동작에만 붙인다 — 별 아이콘은 다시 누르면 되므로 필요 없다.
+void showFavoriteToast(
+  BuildContext context, {
+  required bool added,
+  VoidCallback? onUndo,
+}) {
   final AppColors colors = context.colors;
   final AppDimens dimens = context.dimens;
 
@@ -58,6 +65,20 @@ void showFavoriteToast(BuildContext context, {required bool added}) {
                 style: AppTypography.label.copyWith(color: colors.textPrimary),
               ),
             ),
+            if (onUndo != null)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  onUndo();
+                },
+                child: Text(
+                  '실행 취소',
+                  style: AppTypography.label.copyWith(
+                    color: colors.accentDefault,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
