@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/format.dart' as fmt;
 import '../../theme/theme.dart';
 import '../common/price_tone_color.dart';
 import 'detail_view_model.dart';
@@ -39,7 +38,7 @@ class CurrentPrice extends StatelessWidget {
             builder: (BuildContext context, double value, Widget? _) => Text(
               viewModel.price == null
                   ? viewModel.priceLabel
-                  : fmt.thousands(value.round()),
+                  : viewModel.labelForPrice(value),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.displayPrice.copyWith(

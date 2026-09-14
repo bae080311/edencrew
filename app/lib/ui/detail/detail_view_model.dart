@@ -10,6 +10,7 @@ import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
 import '../common/load_state.dart';
 import '../common/debug_log.dart';
+import 'chart_axis_ui.dart';
 import 'detail_ui_model.dart';
 
 /// 종목상세 화면의 상태와 계산을 맡는다.
@@ -106,6 +107,43 @@ class DetailViewModel extends ChangeNotifier {
 
   List<DailyPriceRowUi>? _dailyRows;
 
+  /// 차트 축 · 크로스헤어 문자열. 포맷은 전부 여기서 끝내고 painter 는 배치만 한다.
+  ChartAxisUi get chartAxis => _chartAxis ??= _buildChartAxis();
+
+  ChartAxisUi? _chartAxis;
+
+  ChartAxisUi _buildChartAxis() {
+    if (_prices.isEmpty) return ChartAxisUi.empty;
+
+    int high = _prices.first.high;
+    int low = _prices.first.low;
+    for (final DailyPrice price in _prices) {
+      if (price.high > high) high = price.high;
+      if (price.low < low) low = price.low;
+    }
+
+    // 그리는 쪽과 같은 순서(오래된 순)로 세운다.
+    final List<String> focus = _prices.reversed
+        .map(
+          (DailyPrice p) =>
+              '${fmt.monthDay(p.date)}  ${fmt.thousands(p.close)}',
+        )
+        .toList(growable: false);
+
+    return ChartAxisUi(
+      high: high,
+      low: low,
+      highLabel: fmt.thousands(high),
+      lowLabel: fmt.thousands(low),
+      firstDateLabel: fmt.monthDay(_prices.last.date),
+      lastDateLabel: fmt.monthDay(_prices.first.date),
+      focusLabels: focus,
+    );
+  }
+
+  /// 카운트업 중간값의 표시 문자열. 값이 매 프레임 바뀌어도 포맷 규칙은 한 곳이다.
+  String labelForPrice(num value) => fmt.thousands(value.round());
+
   Future<void> load() async {
     _state = LoadState.loading;
     _errorMessage = null;
@@ -123,6 +161,7 @@ class DetailViewModel extends ChangeNotifier {
       _quote = (results[1] as Map<String, Quote>)[symbol];
       _prices = results[2] as List<DailyPrice>;
       _dailyRows = null;
+      _chartAxis = null;
       _state = LoadState.ready;
       _periodError = null;
     } on Object catch (error) {
@@ -154,6 +193,7 @@ class DetailViewModel extends ChangeNotifier {
       if (period != _period) return; // 지난 탭의 응답은 버린다
       _prices = prices;
       _dailyRows = null;
+      _chartAxis = null;
       _periodError = null;
     } on Object catch (error) {
       if (period != _period) return;

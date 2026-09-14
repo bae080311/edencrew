@@ -2,6 +2,7 @@ import 'package:edencrew_assignment_starter/data/model/daily_price.dart';
 import 'package:edencrew_assignment_starter/theme/theme.dart';
 import 'package:edencrew_assignment_starter/ui/detail/candle_chart.dart';
 import 'package:edencrew_assignment_starter/ui/detail/candle_painter.dart';
+import 'package:edencrew_assignment_starter/ui/detail/chart_axis_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -20,6 +21,17 @@ List<DailyPrice> pricesOf(int count) => List<DailyPrice>.generate(
   (int i) => priceOf('2026091${i % 10}', 50000 + i * 10),
 );
 
+/// 축 문자열은 ViewModel 이 만든다. 테스트는 그린 결과만 보므로 값만 맞춰 둔다.
+ChartAxisUi axisOf(List<DailyPrice> prices) => ChartAxisUi(
+  high: prices.map((DailyPrice p) => p.high).reduce((a, b) => a > b ? a : b),
+  low: prices.map((DailyPrice p) => p.low).reduce((a, b) => a < b ? a : b),
+  highLabel: '최고',
+  lowLabel: '최저',
+  firstDateLabel: '09.01',
+  lastDateLabel: '09.10',
+  focusLabels: List<String>.filled(prices.length, '09.05  50,000'),
+);
+
 const Size _canvas = Size(300, 200);
 
 /// painter 가 **실제로 그린 것**을 센다. `progress` 값만 보면 그리기에 쓰이지
@@ -30,8 +42,10 @@ const Size _canvas = Size(300, 200);
 int drawCallsAt(double progress) {
   // 색은 토큰에서 가져온다 — 테스트에도 hex 리터럴을 쓰지 않는다.
   const AppColors colors = AppColors.dark();
+  final List<DailyPrice> prices = pricesOf(40);
   final painter = CandlePainter(
-    prices: pricesOf(40),
+    prices: prices,
+    axis: axisOf(prices),
     focusIndex: null,
     progress: progress,
     up: colors.chartLineUp,
@@ -69,7 +83,9 @@ class _CountingCanvas implements Canvas {
 
 Widget chartWith(List<DailyPrice> prices) => MaterialApp(
   theme: AppTheme.dark,
-  home: Scaffold(body: CandleChart(prices: prices)),
+  home: Scaffold(
+    body: CandleChart(prices: prices, axis: axisOf(prices)),
+  ),
 );
 
 CandlePainter painterOf(WidgetTester tester) =>

@@ -4,14 +4,18 @@ import 'package:flutter/services.dart';
 import '../../data/model/daily_price.dart';
 import '../../theme/theme.dart';
 import 'candle_painter.dart';
+import 'chart_axis_ui.dart';
 
 /// 일별 시세 차트. 캔들 · 거래량 바 · 축 라벨 · 기간 방향 영역 · 크로스헤어를
 /// 한 캔버스에 그린다. 짚은 자리의 날짜 · 종가도 캔버스 안에 띄운다.
 class CandleChart extends StatefulWidget {
-  const CandleChart({required this.prices, super.key});
+  const CandleChart({required this.prices, required this.axis, super.key});
 
   /// 최신 거래일이 먼저 온다. 왼쪽이 과거가 되도록 뒤에서부터 그린다.
   final List<DailyPrice> prices;
+
+  /// 축 · 크로스헤어 문자열. 포맷은 ViewModel 이 끝낸다.
+  final ChartAxisUi axis;
 
   /// 시안 `Chart` 프레임 높이. 이 화면 밖에서 쓰지 않아 토큰으로 올리지 않았다.
   static const double _height = 200;
@@ -78,6 +82,7 @@ class _CandleChartState extends State<CandleChart>
           builder: (BuildContext context, Widget? _) => CustomPaint(
             painter: CandlePainter(
               prices: widget.prices,
+              axis: widget.axis,
               focusIndex: _focusIndex,
               progress: _curve.value,
               up: colors.chartLineUp,

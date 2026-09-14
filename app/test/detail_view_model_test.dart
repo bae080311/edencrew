@@ -422,4 +422,50 @@ void main() {
       expect(viewModel.marketLabel, '005930');
     });
   });
+
+  group('차트 축', () {
+    test('축 문자열과 눈금 기준을 ViewModel 이 만든다', () async {
+      final viewModel = viewModelWith(
+        StubStockRepository(
+          byPeriod: <ChartPeriod, List<DailyPrice>>{
+            ChartPeriod.oneMonth: <DailyPrice>[
+              priceOf('20260911'),
+              priceOf('20260910'),
+            ],
+          },
+        ),
+      );
+
+      await viewModel.load();
+      final axis = viewModel.chartAxis;
+
+      expect(axis.high, greaterThanOrEqualTo(axis.low));
+      expect(axis.highLabel, contains(','), reason: '천 단위 쉼표가 들어간다');
+      // 가로축은 오래된 쪽이 왼쪽이다.
+      expect(axis.firstDateLabel, '09.10');
+      expect(axis.lastDateLabel, '09.11');
+      expect(axis.focusLabels.length, 2, reason: '짚을 수 있는 거래일마다 하나씩 있어야 한다');
+      expect(axis.focusLabels.first, startsWith('09.10'));
+    });
+
+    test('구간이 바뀌면 축도 다시 만든다', () async {
+      final viewModel = viewModelWith(
+        StubStockRepository(
+          byPeriod: <ChartPeriod, List<DailyPrice>>{
+            ChartPeriod.oneMonth: <DailyPrice>[priceOf('20260911')],
+            ChartPeriod.threeMonths: <DailyPrice>[
+              priceOf('20260911'),
+              priceOf('20260901'),
+            ],
+          },
+        ),
+      );
+
+      await viewModel.load();
+      expect(viewModel.chartAxis.focusLabels.length, 1);
+
+      await viewModel.changePeriod(ChartPeriod.threeMonths);
+      expect(viewModel.chartAxis.focusLabels.length, 2);
+    });
+  });
 }

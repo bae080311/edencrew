@@ -2,15 +2,16 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../core/format.dart';
 import '../../data/model/daily_price.dart';
 import '../../data/model/price_tone.dart';
+import 'chart_axis_ui.dart';
 
 /// 캔들 · 거래량 바 · 축 라벨 · 기간 방향 영역 · 크로스헤어를 한 캔버스에 그린다.
 /// 색은 전부 주입받는다 — `BuildContext` 없이 토큰에 닿을 수 없기 때문이다.
 class CandlePainter extends CustomPainter {
   CandlePainter({
     required this.prices,
+    required this.axis,
     required this.focusIndex,
     required this.progress,
     required this.up,
@@ -26,6 +27,9 @@ class CandlePainter extends CustomPainter {
   });
 
   final List<DailyPrice> prices;
+
+  /// 축 · 크로스헤어 문자열과 세로 눈금 기준. 포맷은 ViewModel 이 끝냈다.
+  final ChartAxisUi axis;
   final int? focusIndex;
 
   /// 0 → 1 로 가며 왼쪽(과거)부터 차례로 드러난다.
@@ -74,12 +78,10 @@ class CandlePainter extends CustomPainter {
     final double volumeTop = priceBottom + plot * 0.05;
     final double volumeBottom = math.min(volumeTop + plot * _volumeRatio, plot);
 
-    int lowest = prices.first.low;
-    int highest = prices.first.high;
+    final int lowest = axis.low;
+    final int highest = axis.high;
     int peakVolume = prices.first.volume;
     for (final DailyPrice price in prices) {
-      lowest = math.min(lowest, price.low);
-      highest = math.max(highest, price.high);
       peakVolume = math.max(peakVolume, price.volume);
     }
 
@@ -119,15 +121,7 @@ class CandlePainter extends CustomPainter {
       growOf,
     );
     _paintCandles(canvas, oldestFirst, slot, bodyWidth, y, priceBottom, growOf);
-    _paintAxisLabels(
-      canvas,
-      size,
-      oldestFirst,
-      highest,
-      lowest,
-      priceBottom,
-      volumeBottom,
-    );
+    _paintAxisLabels(canvas, size, oldestFirst, priceBottom, volumeBottom);
     _paintFocus(canvas, size, oldestFirst, slot, y, volumeBottom);
   }
 
@@ -247,33 +241,25 @@ class CandlePainter extends CustomPainter {
     Canvas canvas,
     Size size,
     List<DailyPrice> oldestFirst,
-    int highest,
-    int lowest,
     double priceBottom,
     double volumeBottom,
   ) {
     // 크로스헤어 라벨도 오른쪽 위에 붙으므로 짚는 동안에는 최고가를 비운다.
     // 둘이 같은 자리에 겹쳐 그려지면 어느 쪽도 읽을 수 없다.
     if (focusIndex == null) {
-      _label(canvas, thousands(highest), size.width, 0, alignRight: true);
+      _label(canvas, axis.highLabel, size.width, 0, alignRight: true);
     }
     _label(
       canvas,
-      thousands(lowest),
+      axis.lowLabel,
       size.width,
       priceBottom - _labelHeight,
       alignRight: true,
     );
 
     final double dateTop = volumeBottom + _labelGap;
-    _label(canvas, monthDay(oldestFirst.first.date), 0, dateTop);
-    _label(
-      canvas,
-      monthDay(oldestFirst.last.date),
-      size.width,
-      dateTop,
-      alignRight: true,
-    );
+    _label(canvas, axis.firstDateLabel, 0, dateTop);
+    _label(canvas, axis.lastDateLabel, size.width, dateTop, alignRight: true);
   }
 
   /// 짚은 거래일에 세로선을 긋고 종가 · 거래량을 띄운다.
@@ -310,7 +296,7 @@ class CandlePainter extends CustomPainter {
     final bool toLeft = centerX > size.width * 0.6;
     _label(
       canvas,
-      '${monthDay(price.date)}  ${thousands(price.close)}',
+      axis.focusLabels[index],
       toLeft ? centerX - 6 : centerX + 6,
       0,
       alignRight: toLeft,
@@ -345,6 +331,7 @@ class CandlePainter extends CustomPainter {
   @override
   bool shouldRepaint(CandlePainter oldDelegate) =>
       oldDelegate.prices != prices ||
+      oldDelegate.axis != axis ||
       oldDelegate.focusIndex != focusIndex ||
       oldDelegate.progress != progress ||
       oldDelegate.up != up ||

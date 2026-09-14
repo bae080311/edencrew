@@ -117,7 +117,13 @@ class _DetailViewState extends State<DetailView> {
                 ),
                 ..._periodFailure(viewModel, dimens),
                 SizedBox(height: dimens.space4),
-                _stale(viewModel, CandleChart(prices: viewModel.chartPrices)),
+                _stale(
+                  viewModel,
+                  CandleChart(
+                    prices: viewModel.chartPrices,
+                    axis: viewModel.chartAxis,
+                  ),
+                ),
                 SizedBox(height: dimens.space4),
                 QuoteSummaryCard(
                   open: viewModel.openLabel,
