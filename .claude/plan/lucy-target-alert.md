@@ -38,7 +38,7 @@
 
 ## 선택
 
-- [ ] 디자인 토큰을 Lucy Studio 가 지원하는 방식으로 정의해 두고 참조
+- [ ] ~~선택~~ **사실상 필요** — 새 프로젝트에 색 토큰이 하나도 없다. 아래 "색 토큰" 표대로 정의해야 `setTextColor("price/up/text")` 가 동작한다
 - [ ] 종목명 · 목표가 입력값 검증
 - [ ] 항목 삭제
 
@@ -185,87 +185,146 @@ function applySide(side) {
 > 토큰 이름(`price/up/text`)은 이 프로젝트의 색 토큰 이름과 같아야 한다.
 > 스튜디오 색상 패널에서 실제 토큰 이름을 확인하고 맞춘다.
 
+### 스크립트 형식 — 클래스다, 최상위 함수가 아니다
+
+문서(`logic-and-scripting`)는 `function onStart()` 형태로 설명하지만, **Lucy Studio 가
+새 페이지에 실제로 넣어 주는 템플릿은 클래스 형식**이다. `targetAlert.lfp` 에서 확인했다.
+
+```js
+require('base.js');
+class TargetAlertVM extends BaseVM {
+  constructor() { super(); }
+  onStart() { }
+  onMessage(key, data) { }
+}
+let jvm = TargetAlertVM.setup();
+```
+
+**생성된 템플릿을 따른다.** 위젯은 문서대로 **id 를 전역 변수처럼** 쓰고, `$form` 도 그대로 쓴다.
+메서드 안에서 `this` 를 유지해야 하므로 콜백은 **화살표 함수**로 넘긴다(문서가 ES6+ 를 보장한다).
+
 ### 페이지 `targetAlert`
 
 ```js
-function onStart() {
-  btnPlus.onClick = openAddDialog;   // + 를 아이콘/이미지로 뒀으면 onTap
-  render();
-}
+require('base.js');
 
-// 데이터 연동이 없으므로 폼 로컬 변수 하나면 충분하다.
-function alerts() {
-  return $form.getVar("alerts") || [];
-}
+class TargetAlertVM extends BaseVM {
+  constructor() {
+    super();
+  }
 
-function openAddDialog() {
-  // 인자 순서는 (formPath, linkArg, jsCallback, options). 콜백이 options 보다 앞이다.
-  $form.openDialog("targetAlertAdd", null, function (result) {
-    if (!result) return;             // x 로 닫았거나 배경을 탭한 경우 — 아무것도 추가하지 않는다
-    var list = alerts();
-    list.push(result);               // { name, price, side }
-    $form.setVar("alerts", list);
-    render();
-  }, { barrierDismissible: true });
-}
+  onStart() {
+    btnPlus.onClick = () => this.openAddDialog();   // + 가 아이콘이면 onTap
+    this.render();
+  }
 
-function render() {
-  var list = alerts();
+  // 데이터 연동이 없으므로 폼 로컬 변수 하나면 충분하다.
+  alerts() {
+    return $form.getVar("alerts") || [];
+  }
 
-  // 빈 상태와 목록은 둘 중 하나만 보인다. 헤더는 어느 쪽이든 그대로다.
-  emptyState.visible = list.length === 0;
-  lsvAlert.visible = list.length > 0;
+  openAddDialog() {
+    // 인자 순서는 (formPath, linkArg, jsCallback, options). 콜백이 options 보다 앞이다.
+    $form.openDialog("targetAlertAdd", null, (result) => {
+      if (!result) return;          // x 로 닫았거나 배경을 탭한 경우 — 아무것도 추가하지 않는다
+      const list = this.alerts();
+      list.push(result);            // { name, price, side }
+      $form.setVar("alerts", list);
+      this.render();
+    }, { barrierDismissible: true });
+  }
 
-  lsvAlert.clear();
-  for (var i = 0; i < list.length; i++) {
-    lsvAlert.add();
-    // setState 가 바인딩 스코프를 i 행으로 잡아 준다. 그 안의 쓰기는 i 행으로 간다.
-    lsvAlert.setState(i, makeRowSetter(list[i]));
+  render() {
+    const list = this.alerts();
+
+    // 빈 상태와 목록은 둘 중 하나만 보인다. 헤더는 어느 쪽이든 그대로다.
+    emptyState.visible = list.length === 0;
+    lsvAlert.visible = list.length > 0;
+
+    lsvAlert.clear();
+    list.forEach((item, i) => {
+      lsvAlert.add();
+      // setState 가 바인딩 스코프를 i 행으로 잡아 준다. 그 안의 쓰기는 i 행으로 간다.
+      lsvAlert.setState(i, () => {
+        cmpRow.setVar("name", item.name);
+        cmpRow.setVar("priceLabel", this.thousands(item.price));
+        cmpRow.setVar("side", item.side);
+      });
+    });
+  }
+
+  // 천 단위 구분 쉼표. 과제 1 의 `core/format.dart` 와 같은 규칙이다.
+  thousands(value) {
+    return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 }
 
-// 클로저를 루프 밖에서 만든다 — var 는 블록 스코프가 아니라 i 가 공유된다.
-function makeRowSetter(item) {
-  return function () {
-    cmpRow.setVar("name", item.name);
-    cmpRow.setVar("priceLabel", thousands(item.price));
-    cmpRow.setVar("side", item.side);
-  };
-}
-
-// 천 단위 구분 쉼표. 과제 1 의 `core/format.dart` 와 같은 규칙이다.
-function thousands(value) {
-  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
+let jvm = TargetAlertVM.setup();
 ```
 
 ### 다이얼로그 폼 `targetAlertAdd`
 
 ```js
-function onStart() {
-  btnClose.onTap = function () { $form.closeDialog(null); };   // x 가 Button 이면 onClick
-  btnSell.onClick = function () { submit("sell"); };
-  btnBuy.onClick = function () { submit("buy"); };
+require('base.js');
+
+class TargetAlertAddVM extends BaseVM {
+  constructor() {
+    super();
+  }
+
+  onStart() {
+    btnClose.onTap = () => $form.closeDialog(null);   // x 가 Button 이면 onClick
+    btnSell.onClick = () => this.submit("sell");
+    btnBuy.onClick = () => this.submit("buy");
+  }
+
+  submit(side) {
+    const name = edtName.getText().trim();
+    // 입력 중에 막으면 붙여넣기가 불편하다. 등록 시점에 숫자만 남긴다.
+    const price = edtPrice.getText().replace(/[^0-9]/g, "");
+
+    // 빈 값 검증까지가 필수다. 둘 중 하나라도 비면 닫지 않는다.
+    if (name === "" || price === "") return;
+
+    $form.closeDialog({ name: name, price: Number(price), side: side });
+  }
 }
 
-function submit(side) {
-  var name = edtName.getText().trim();
-  // 입력 중에 막으면 붙여넣기가 불편하다. 등록 시점에 숫자만 남긴다.
-  var price = edtPrice.getText().replace(/[^0-9]/g, "");
+let jvm = TargetAlertAddVM.setup();
+```
 
-  // 빈 값 검증까지가 필수다. 둘 중 하나라도 비면 닫지 않는다.
-  if (name === "" || price === "") return;
+### 행 컴포넌트 `AlertRow` 의 스크립트
 
-  $form.closeDialog({ name: name, price: Number(price), side: side });
+```js
+require('base.js');
+
+class AlertRowVM extends BaseVM {
+  constructor() {
+    super();
+  }
+
+  onStart() {
+    comp.onVarChanged = (name, value) => {
+      if (name === "side") this.applySide(value);
+    };
+    this.applySide(comp.getVar("side"));
+  }
+
+  // 목표가 색이 매도/매수 구분이다. 항목에 라벨을 따로 달지 않는다.
+  applySide(side) {
+    txtPrice.setTextColor(side === "sell" ? "price/down/text" : "price/up/text");
+  }
 }
+
+let jvm = AlertRowVM.setup();
 ```
 
 ### 스튜디오에서 확인할 것
 
 API 는 대조가 끝났다. 남은 건 **스튜디오에서만 알 수 있는 것** 넷이다.
 
-- **`onStart` 가 폼 스크립트의 진입점 이름이 맞는지.** 번들 스키마에 없다 — 스크립트 편집기가
-  만들어 주는 생명주기 훅이라 편집기에서 확인한다. 이름이 다르면 그 이름으로 바꾼다.
+- ~~`onStart` 진입점 이름~~ — **확정됐다.** 생성된 `targetAlert.lfp` 안에 템플릿이 들어 있다.
+  `BaseVM` 을 상속한 클래스의 `onStart()` 메서드이고 `setup()` 으로 등록된다. 위 스크립트가 그 형식이다.
 - **`lsvAlert.setState(i, fn)` 안의 `cmpRow.setVar(...)` 가 i 번째 행 인스턴스로 가는지.**
   문서는 "바인딩된 프로퍼티"를 말할 뿐 컴포넌트 변수까지 같은 스코프인지는 적지 않았다.
   두 행을 넣어 확인한다. 아니면 행을 컴포넌트 대신 리스트 안에 직접 그리고(튜토리얼 방식)
@@ -274,6 +333,74 @@ API 는 대조가 끝났다. 남은 건 **스튜디오에서만 알 수 있는 �
 - 위젯 id 를 위 스크립트와 같은 이름(`btnPlus` · `lsvAlert` · `cmpRow` · `emptyState` ·
   `txtPrice` · `edtName` · `edtPrice` · `btnClose` · `btnSell` · `btnBuy`)으로 맞추면 그대로 붙는다.
   `cmpRow` 는 리스트 안에 놓은 **행 컴포넌트 인스턴스**의 id 다.
+
+---
+
+## 서버 주소 — 번들 설정이 낡아 있었다 (2026-09-12, 해결)
+
+Lucy Studio 가 `Cannot Load Projects — Server response is invalid.` 로 프로젝트를 못 불러왔다.
+원인은 **앱이 보던 API 호스트 `lucy.edencrew.io` 가 존재하지 않는 도메인**이라는 것이었다.
+
+| 확인한 것 | 결과 |
+| --- | --- |
+| 인터넷 (대조군) | github.com 200 |
+| OIDC 토큰 | 유효 — 앱이 갱신하고 있었다 |
+| `auth.edencrew.io` | 200 |
+| `lucy.edencrew.io` (앱 설정값) | **NXDOMAIN** — 8.8.8.8 기준 이름 자체가 없다 |
+| `121.65.247.235` (번들 `assets/config`) | 전 포트 무응답 |
+| **`cloud.edencrew.io`** | **200 · `<title>Lucy TeamCloud</title>`** ← 진짜 서버 |
+
+공용 리졸버에서 NXDOMAIN 이었으므로 기관망 차단이 아니라 주소가 틀린 것이다.
+앱 번들의 `assets/config` · `config.txt` 에 적힌 호스트가 둘 다 낡았다.
+맞는 주소는 **문서**(`docs/manage-projects` 의 "cloud.edencrew.io 에 로그인")에 있었다.
+
+**조치** — 앱 설정을 바꿨다. 되돌리려면 같은 명령에 옛 값을 넣는다.
+
+```
+defaults write com.edencrew.lucystudio.macos flutter.lucy_server_setting \
+  -string '{"ip":"cloud.edencrew.io","port":"443"}'
+```
+
+> 목록이 비어 있는 것(`No projects registered.`)은 정상이다 — 계정에 프로젝트를 아직 안 만들었을 뿐이다.
+> **프로젝트 이름은 자유, 과제가 요구하는 `targetAlert` 는 페이지 이름이다.**
+
+---
+
+## 색 토큰 — 직접 정의해야 한다
+
+클론한 프로젝트는 **비어 있다.** `assets/theme/text_styles.json` 이 빈 배열이고 색 정의가 없다.
+`setTextColor` 는 색상 **토큰 이름**을 받으므로, 토큰을 만들지 않으면 이름이 안 먹는다.
+
+값은 과제 1 의 `app/lib/theme/` 에서 그대로 가져왔다. **Lucy 는 ARGB `#AARRGGBB`** 로 받는다
+(`IconObjet.color` 문서 예시가 `"#FF00AAFF"`).
+
+| Lucy 토큰 이름 | 값 | 출처 (앱 토큰) |
+| --- | --- | --- |
+| `surface/base` | `#FF0F0F0E` | `neutral950` |
+| `surface/sunken` | `#FF1C1C19` | `neutral800` |
+| `surface/overlay` | `#FF23231F` | `neutral700` |
+| `surface/scrim` | `#99000000` | 앱에 없음 — 시안의 검정 60% |
+| `border/subtle` | `#FF23231F` | `neutral700` |
+| `border/strong` | `#FF3D3D37` | `neutral500` |
+| `text/primary` | `#FFFAF9F5` | `neutral0` |
+| `text/secondary` | `#FFB4B2A9` | `neutral200` |
+| `text/tertiary` | `#FF888780` | `neutral300` |
+| **`price/up/text`** | `#FFFF5B5B` | `red400` — **매수 · 빨강** |
+| `price/up/bg` | `#1FFF5B5B` | `redAlpha12` |
+| **`price/down/text`** | `#FF4D9BEE` | `blue400` — **매도 · 파랑** |
+| `price/down/bg` | `#1F4D9BEE` | `blueAlpha12` |
+| `accent` | `#FF8B7CF6` | `violet500` — `+` 버튼 |
+
+> 토큰 이름을 다르게 지으면 `AlertRow` 스크립트의 `setTextColor` 인자도 그 이름으로 바꾼다.
+> 이름을 못 쓰겠으면 hex 를 직접 넣어도 동작한다 — 그때는 README 에 이유를 남긴다.
+
+### 프로젝트 위치
+
+클론 경로는 **`~/Documents/edencrew`** 다(저장소 `~/edenCrew` 와 다른 곳이니 헷갈리지 않게).
+제출물 `cloneProject/assets` 는 여기의 **`~/Documents/edencrew/assets`** 이고,
+`page` · `component` · `script` · `theme` · `icons` 로 나뉘어 있다. git 으로도 관리된다.
+
+캔버스 기본 해상도가 **iPhone 11(414×896)** 로 잡혀 있다. 시안 기준은 **393 × 852** 이므로 바꾼다.
 
 ---
 
@@ -297,17 +424,18 @@ API 는 대조가 끝났다. 남은 건 **스튜디오에서만 알 수 있는 �
 4. 페이지에 ListView `lsvAlert` 를 놓고 그 안에 `AlertRow` 인스턴스를 놓는다. 인스턴스 id 는 `cmpRow`.
 5. **두 행을 서로 다른 값으로 넣어 본다.** 페이지 스크립트에 임시로:
    ```js
-   function onStart() {
+   // 생성된 템플릿의 onStart() 메서드 안에만 넣는다. 나머지 줄은 건드리지 않는다.
+   onStart() {
      lsvAlert.clear();
-     lsvAlert.add(); lsvAlert.setState(0, function () { cmpRow.setVar("name", "첫째"); });
-     lsvAlert.add(); lsvAlert.setState(1, function () { cmpRow.setVar("name", "둘째"); });
+     lsvAlert.add(); lsvAlert.setState(0, () => cmpRow.setVar("name", "첫째"));
+     lsvAlert.add(); lsvAlert.setState(1, () => cmpRow.setVar("name", "둘째"));
    }
    ```
    두 행이 `첫째` · `둘째` 로 갈리면 통과. **둘 다 같은 값이면 스코프가 안 먹는 것이다** —
    행을 컴포넌트 대신 리스트 안에 직접 그리고(튜토리얼 방식), 재사용은 컴포넌트를
    다른 자리에서 가져다 쓰는 것으로 만족한다. 이때 `AlertRow` 자체는 버리지 않는다.
-- 같은 자리에서 **`onStart` 가 실제로 불리는지**도 같이 확인된다. 안 불리면 편집기가
-  만들어 주는 훅 이름으로 바꾼다.
+- 같은 자리에서 **`onStart` 가 실제로 불리는지**도 같이 확인된다. 아무것도 안 그려지면
+  `let jvm = XxxVM.setup();` 줄이 남아 있는지부터 본다 — 그 줄이 클래스를 런타임에 등록한다.
 
 ### 3. 헤더
 
@@ -350,6 +478,48 @@ API 는 대조가 끝났다. 남은 건 **스튜디오에서만 알 수 있는 �
 - `x` → 아무것도 추가되지 않고 닫힌다
 - 종목명이나 목표가를 비우고 `매수` → 닫히지 않는다
 - 전부 지우면 빈 상태가 다시 나오고 **헤더는 남아 있다**
+
+---
+
+## 페이지 파일(.lfp) 형식 — 손으로 쓸 수 있다
+
+프로젝트가 파일 기반이라 페이지를 **직접 작성해 넣을 수 있다.** 형식은 `Tutorial 01` 프로젝트를
+클론해 읽어서 확정했다(`~/Documents/Tutorial 01/assets/page/`). GUI 가 막히면 이 길이 빠르다.
+
+`assets/page/<이름>.lfp` — 첫 줄이 `#`, 그 아래가 JSON.
+
+```
+forms[0].objet = Jet
+  property { id, title, backgroundColor: { value: <ARGB int> } }
+  child = Layout
+```
+
+**컨테이너의 자식은 언제나 `Layout` 래퍼를 한 겹 거친다.**
+
+```json
+{ "bulb": "Layout", "uuid": "<10자>", "property": {},
+  "mount":    { "bulb": "Flexible", "property": { "fit": "tight" } },
+  "interior": [ { "bulb": "Padding", ... }, { "bulb": "SizedBox", ... } ],
+  "objet":    { "bulb": "Text", "property": { "id": "txtName", ... } } }
+```
+
+- `mount` — 부모 안에서의 배치(`Flexible` 등). 같은 폭으로 나눠 갖기가 이것이다
+- `interior` — 감싸는 장식(`Padding` · `SizedBox` · `DecoratedBox`). 바깥부터 안쪽 순
+- `objet` — 실제 위젯. **위젯 id 는 `property.id`** 이고 스크립트에서 전역처럼 참조한다
+
+| 함정 | 실제 |
+| --- | --- |
+| **padding 키** | `all` · `left` · `right` · `top` · `bottom` **뿐**. `horizontal` · `vertical` 은 **조용히 무시**된다 |
+| **Button 배경** | `backgroundColor` 가 아니라 **`fillColor`**. 안 주면 머티리얼 기본 파란 버튼이 나온다 |
+| **Button 테두리** | 기본 테두리가 남는다. `border.all` 을 `style: "none"` 으로 꺼야 흰 선이 사라진다 |
+| **색** | `{ "value": <ARGB 정수> }`. 토큰을 쓰면 `{ "theme": N, "value": ... }` 지만 토큰 없이 `value` 만으로 된다 |
+| **ListView** | 반복 자식은 `children` 이 아니라 **`child` 하나**가 템플릿이다. 초기 `count: 0` |
+| **다이얼로그 경로** | `assets/page` 기준 상대경로, 확장자 없이 — `$form.openDialog("targetAlertAdd", ...)` |
+| **다이얼로그 닫기** | **`$ownerForm.closeDialog(result)`** — 연 쪽 폼에 요청한다(`$form` 이 아니다) |
+| **스크립트 형식** | 클래스(`BaseVM`)와 최상위 함수(`function onStart()`) **둘 다 동작**한다. 튜토리얼은 후자를 쓴다 |
+
+생성기는 `scratchpad/gen_lucy_pages.py` 에 있다. 스튜디오가 열려 있으면 메모리 내용으로
+파일을 덮어쓰므로 **반드시 종료한 뒤 실행**한다.
 
 ---
 
