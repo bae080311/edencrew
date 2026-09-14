@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/model/stock.dart';
-import '../ui/common/debug_log.dart';
+import '../core/debug_log.dart';
 
 /// 앱을 껐다 켜도 남아야 하는 값의 저장소.
 ///

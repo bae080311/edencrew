@@ -9,7 +9,7 @@ import 'data/repository/naver_stock_repository.dart';
 import 'data/repository/stock_repository.dart';
 import 'state/favorites_store.dart';
 import 'state/preferences.dart';
-import 'ui/common/debug_log.dart';
+import 'core/debug_log.dart';
 import 'ui/search/search_view_model.dart';
 import 'ui/watchlist/watchlist_view_model.dart';
 

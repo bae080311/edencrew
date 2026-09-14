@@ -7,7 +7,7 @@ import '../../data/repository/stock_repository.dart';
 import '../../state/favorites_store.dart';
 import '../../state/preferences.dart';
 import '../common/load_state.dart';
-import '../common/debug_log.dart';
+import '../../core/debug_log.dart';
 import 'search_ui_model.dart';
 
 /// 검색 화면의 상태와 계산을 맡는다.
