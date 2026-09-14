@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/model/stock.dart';
+import '../ui/common/debug_log.dart';
 
 /// 앱을 껐다 켜도 남아야 하는 값의 저장소.
 ///
@@ -25,7 +27,7 @@ class Preferences {
       Preferences(await SharedPreferences.getInstance());
 
   List<Stock> readFavorites() {
-    final String? raw = _prefs.getString(_favoritesKey);
+    final String? raw = _read(_favoritesKey, _prefs.getString);
     if (raw == null) return const <Stock>[];
     try {
       final Object? decoded = jsonDecode(raw);
@@ -42,33 +44,64 @@ class Preferences {
   }
 
   void writeFavorites(List<Stock> stocks) {
-    _prefs.setString(
+    _write(
       _favoritesKey,
-      jsonEncode(
-        stocks
-            .map(
-              (Stock stock) => <String, String>{
-                'symbol': stock.symbol,
-                'name': stock.name,
-                'exchangeName': stock.exchangeName,
-              },
-            )
-            .toList(growable: false),
+      () => _prefs.setString(
+        _favoritesKey,
+        jsonEncode(
+          stocks
+              .map(
+                (Stock stock) => <String, String>{
+                  'symbol': stock.symbol,
+                  'name': stock.name,
+                  'exchangeName': stock.exchangeName,
+                },
+              )
+              .toList(growable: false),
+        ),
       ),
     );
   }
 
-  String? readSort() => _prefs.getString(_sortKey);
+  String? readSort() => _read(_sortKey, _prefs.getString);
 
-  void writeSort(String name) => _prefs.setString(_sortKey, name);
+  void writeSort(String name) =>
+      _write(_sortKey, () => _prefs.setString(_sortKey, name));
 
   List<String> readRecentQueries() =>
-      _prefs.getStringList(_recentQueriesKey) ?? const <String>[];
+      _read(_recentQueriesKey, _prefs.getStringList) ?? const <String>[];
 
-  void writeRecentQueries(List<String> queries) => _prefs.setStringList(
+  /// 저장된 값이 기대한 타입이 아니면 `getString` 계열이 그대로 던진다.
+  /// 이전 버전이 같은 키에 다른 형태를 남겼을 때 앱이 못 뜨면 안 된다.
+  T? _read<T>(String key, T? Function(String key) read) {
+    try {
+      return read(key);
+    } on Object catch (error, stackTrace) {
+      logSwallowed('저장값을 읽지 못했다 ($key)', error, stackTrace);
+      return null;
+    }
+  }
+
+  void writeRecentQueries(List<String> queries) => _write(
     _recentQueriesKey,
-    queries.take(recentQueryLimit).toList(growable: false),
+    () => _prefs.setStringList(
+      _recentQueriesKey,
+      queries.take(recentQueryLimit).toList(growable: false),
+    ),
   );
+
+  /// 쓰기는 기다리지 않는다 — 화면이 저장을 기다릴 이유가 없다. 대신 실패를
+  /// 흘려보내지 않는다. `await` 없이 두면 예외가 아무 데도 안 걸려 사라진다.
+  void _write(String key, Future<bool> Function() write) =>
+      unawaited(_writeAndLog(key, write));
+
+  Future<void> _writeAndLog(String key, Future<bool> Function() write) async {
+    try {
+      if (!await write()) logSwallowed('저장 실패', '$key 에 쓰지 못했다');
+    } on Object catch (error, stackTrace) {
+      logSwallowed('저장 실패 ($key)', error, stackTrace);
+    }
+  }
 
   static Stock? _toStock(Map<String, dynamic> json) {
     final Object? symbol = json['symbol'];
