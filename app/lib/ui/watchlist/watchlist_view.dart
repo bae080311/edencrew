@@ -73,11 +73,19 @@ class _WatchlistViewState extends State<WatchlistView> {
 
     // 조회 중에도 행은 이미 있고 가격 자리만 스켈레톤이라 따로 로딩 화면을 두지 않는다.
 
-    return ListView.builder(
-      itemCount: rows.length,
-      itemBuilder: (BuildContext context, int index) => WatchlistRow(
-        row: rows[index],
-        onTap: () => openStockDetail(context, rows[index].symbol),
+    // 당겨서 새로고침은 헤더의 새로고침 버튼과 같은 동작을 부른다.
+    // 행이 몇 개 없어 스크롤이 생기지 않을 때도 당길 수 있어야 하므로 physics 를 고정한다.
+    return RefreshIndicator(
+      onRefresh: viewModel.refresh,
+      color: context.colors.accentDefault,
+      backgroundColor: context.colors.surfaceOverlay,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: rows.length,
+        itemBuilder: (BuildContext context, int index) => WatchlistRow(
+          row: rows[index],
+          onTap: () => openStockDetail(context, rows[index].symbol),
+        ),
       ),
     );
   }
