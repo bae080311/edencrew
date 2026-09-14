@@ -164,8 +164,8 @@ class DetailViewModel extends ChangeNotifier {
       _chartAxis = null;
       _state = LoadState.ready;
       _periodError = null;
-    } on Object catch (error) {
-      logSwallowed('상세 조회', error);
+    } on Object catch (error, stackTrace) {
+      logSwallowed('상세 조회', error, stackTrace);
       _state = LoadState.failed;
       _errorMessage = _messageOf(error);
     }
@@ -195,9 +195,9 @@ class DetailViewModel extends ChangeNotifier {
       _dailyRows = null;
       _chartAxis = null;
       _periodError = null;
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
       if (period != _period) return;
-      logSwallowed('기간 전환', error);
+      logSwallowed('기간 전환', error, stackTrace);
       _periodError = _messageOf(error);
     } finally {
       if (period == _period) {

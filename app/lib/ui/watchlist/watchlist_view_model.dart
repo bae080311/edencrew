@@ -80,8 +80,8 @@ class WatchlistViewModel extends ChangeNotifier {
     try {
       await _fetchQuotes();
       _state = LoadState.ready;
-    } on Object catch (error) {
-      logSwallowed('관심 조회', error);
+    } on Object catch (error, stackTrace) {
+      logSwallowed('관심 조회', error, stackTrace);
       if (_quotes.isEmpty) {
         _state = LoadState.failed;
         _errorMessage = _messageOf(error);
@@ -114,8 +114,8 @@ class WatchlistViewModel extends ChangeNotifier {
       await _fetchQuotes();
       _state = LoadState.ready;
       _errorMessage = null;
-    } on Object catch (error) {
-      logSwallowed('새로고침', error);
+    } on Object catch (error, stackTrace) {
+      logSwallowed('새로고침', error, stackTrace);
       // 이미 보여주던 목록은 남기고 실패만 알린다.
       if (_quotes.isEmpty) {
         _state = LoadState.failed;

@@ -153,9 +153,9 @@ class SearchViewModel extends ChangeNotifier {
       _results = results;
       _resultsQuery = query;
       _state = LoadState.ready;
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
       if (requestId != _requestId) return;
-      logSwallowed('검색', error);
+      logSwallowed('검색', error, stackTrace);
       _results = const <Stock>[];
       _resultsQuery = '';
       _state = LoadState.failed;

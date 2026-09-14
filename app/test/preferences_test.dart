@@ -1,6 +1,7 @@
 import 'package:edencrew_assignment_starter/data/model/stock.dart';
 import 'package:edencrew_assignment_starter/state/favorites_store.dart';
 import 'package:edencrew_assignment_starter/state/preferences.dart';
+import 'package:edencrew_assignment_starter/ui/watchlist/watchlist_sort.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -80,5 +81,24 @@ void main() {
 
     prefs.writeSort('changeRate');
     expect(prefs.readSort(), 'changeRate');
+  });
+
+  test('읽기가 다른 타입을 만나도 빈 값으로 시작한다', () async {
+    // 이전 버전이 같은 키에 다른 형태를 남긴 경우.
+    final Preferences prefs = await prefsWith(<String, Object>{
+      'flutter.recent_queries': 'string 이 아니라 목록이어야 한다',
+    });
+
+    expect(prefs.readRecentQueries(), isEmpty);
+  });
+
+  test('정렬 기준이 지금 enum 에 없으면 무시한다', () async {
+    final Preferences prefs = await prefsWith(<String, Object>{
+      'flutter.watchlist_sort': '예전이름',
+    });
+
+    // 저장소는 값을 그대로 돌려주고, 해석은 ViewModel 이 한다.
+    expect(prefs.readSort(), '예전이름');
+    expect(WatchlistSort.values.asNameMap()['예전이름'], isNull);
   });
 }
